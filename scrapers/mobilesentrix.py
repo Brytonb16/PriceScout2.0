@@ -1,3 +1,4 @@
+
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from .utils import safe_get, parse_price
@@ -40,3 +41,14 @@ def scrape_mobile_sentrix(query):
             "image": image,
         }
     ]
+=======
+
+def scrape_mobilesentrix(query):
+    return [{
+        "title": "Mobilesentrix Result for '{}'".format(query),
+        "price": 19.99,
+        "in_stock": True,
+        "source": "Mobilesentrix",
+        "link": "https://mobilesentrix.com/search?q=" + query,
+        "image": "https://via.placeholder.com/100"
+    }]

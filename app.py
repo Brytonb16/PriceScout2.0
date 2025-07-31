@@ -2,7 +2,6 @@
 import os
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
-from scrapers.mobilesentrix import scrape_mobile_sentrix
 from scrapers.fixez import scrape_fixez
 from scrapers.mengtor import scrape_mengtor
 from scrapers.laptopscreen import scrape_laptopscreen
@@ -20,7 +19,7 @@ def search():
     in_stock_only = request.args.get("inStock", "false").lower() == "true"
 
     results = []
-    results += scrape_mobile_sentrix(query)
+    results += scrape_mobilesentrix(query)
     results += scrape_fixez(query)
     results += scrape_mengtor(query)
     results += scrape_laptopscreen(query)
