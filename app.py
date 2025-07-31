@@ -20,7 +20,7 @@ def search():
     in_stock_only = request.args.get("inStock", "false").lower() == "true"
 
     results = []
-    results += scrape_mobile_sentrix(query)
+    results += scrape_mobilesentrix(query)
     results += scrape_fixez(query)
     results += scrape_mengtor(query)
     results += scrape_laptopscreen(query)
