@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>PriceScout</title></head>
+<body>
+  <h1>PriceScout UI</h1>
+  <input type="text" id="searchInput" placeholder="Search...">
+  <button onclick="searchParts()">Search</button>
+  <label><input type="checkbox" id="inStockOnly"> In Stock Only</label>
+  <div id="results"></div>
+  <script>
+    async function searchParts() {
+      const q = document.getElementById('searchInput').value;
+      const inStock = document.getElementById('inStockOnly').checked;
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&inStock=${inStock}`);
+      const data = await res.json();
+      document.getElementById('results').innerHTML = data.map(item =>
+        `<div><strong>${item.title}</strong> - $${item.price} - ${item.source} - In Stock: ${item.in_stock}</div>`
+      ).join('');
+    }
+  </script>
+</body>
+</html>

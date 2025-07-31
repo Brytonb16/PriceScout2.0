@@ -1,0 +1,2 @@
+startCommand: python app.py
+buildCommand: playwright install --with-deps
