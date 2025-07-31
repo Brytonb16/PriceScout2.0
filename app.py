@@ -2,7 +2,7 @@
 import os
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
-from scrapers.mobile_sentrix import scrape_mobile_sentrix
+from scrapers.mobilesentrix import scrape_mobile_sentrix
 from scrapers.fixez import scrape_fixez
 from scrapers.mengtor import scrape_mengtor
 from scrapers.laptopscreen import scrape_laptopscreen
