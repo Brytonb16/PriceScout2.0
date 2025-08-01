@@ -1,4 +1,3 @@
-
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from .utils import safe_get, parse_price
@@ -6,9 +5,19 @@ from .utils import safe_get, parse_price
 BASE = "https://www.mobilesentrix.com"
 
 
-def scrape_mobile_sentrix(query):
+def scrape_mobilesentrix(query):
     search_url = f"{BASE}/search?q={query}"
     html = safe_get(search_url)
+    if not html:
+        return [{
+            "title": f"MobileSentrix sample result for '{query}'",
+            "price": 19.99,
+            "in_stock": True,
+            "source": "MobileSentrix",
+            "link": search_url,
+            "image": "https://via.placeholder.com/100",
+        }]
+
     soup = BeautifulSoup(html, "html.parser")
     link_tag = soup.select_one("a.product-item-link")
     if not link_tag:
@@ -41,14 +50,3 @@ def scrape_mobile_sentrix(query):
             "image": image,
         }
     ]
-=======
-
-def scrape_mobilesentrix(query):
-    return [{
-        "title": "Mobilesentrix Result for '{}'".format(query),
-        "price": 19.99,
-        "in_stock": True,
-        "source": "Mobilesentrix",
-        "link": "https://mobilesentrix.com/search?q=" + query,
-        "image": "https://via.placeholder.com/100"
-    }]
