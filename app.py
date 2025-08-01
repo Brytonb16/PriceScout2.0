@@ -5,6 +5,7 @@ from flask_cors import CORS
 from scrapers.fixez import scrape_fixez
 from scrapers.mengtor import scrape_mengtor
 from scrapers.laptopscreen import scrape_laptopscreen
+from scrapers.mobilesentrix import scrape_mobilesentrix
 
 app = Flask(__name__)
 CORS(app)
