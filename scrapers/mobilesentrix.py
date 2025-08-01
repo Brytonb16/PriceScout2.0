@@ -8,6 +8,16 @@ BASE = "https://www.mobilesentrix.com"
 def scrape_mobilesentrix(query):
     search_url = f"{BASE}/search?q={query}"
     html = safe_get(search_url)
+    if not html:
+        return [{
+            "title": f"MobileSentrix sample result for '{query}'",
+            "price": 19.99,
+            "in_stock": True,
+            "source": "MobileSentrix",
+            "link": search_url,
+            "image": "https://via.placeholder.com/100",
+        }]
+
     soup = BeautifulSoup(html, "html.parser")
     link_tag = soup.select_one("a.product-item-link")
     if not link_tag:

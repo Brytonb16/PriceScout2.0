@@ -12,19 +12,31 @@
     async function searchParts() {
       const q = document.getElementById('searchInput').value;
       const inStock = document.getElementById('inStockOnly').checked;
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&inStock=${inStock}`);
-      const data = await res.json();
-      document.getElementById('results').innerHTML = data.map(item =>
-        `\
-<div class="result">\
-  <a href="${item.link}" target="_blank">\
-    <img src="${item.image}" alt="${item.title}" width="100">\
-  </a>\
-  <div>\
-    <a href="${item.link}" target="_blank"><strong>${item.title}</strong></a> - $${item.price} - ${item.source} - In Stock: ${item.in_stock}\
-  </div>\
-</div>`
-      ).join('');
+
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&inStock=${inStock}`);
+        if (!res.ok) throw new Error('Request failed');
+        const data = await res.json();
+
+        const resultsEl = document.getElementById('results');
+        if (data.length === 0) {
+          resultsEl.innerHTML = '<p>No results found.</p>';
+          return;
+        }
+
+        resultsEl.innerHTML = data.map(item => `
+<div class="result">
+  <a href="${item.link}" target="_blank">
+    <img src="${item.image}" alt="${item.title}" width="100">
+  </a>
+  <div>
+    <a href="${item.link}" target="_blank"><strong>${item.title}</strong></a> - $${item.price} - ${item.source} - In Stock: ${item.in_stock}
+  </div>
+</div>`).join('');
+      } catch (err) {
+        console.error(err);
+        document.getElementById('results').innerHTML = '<p class="error">Failed to fetch results.</p>';
+      }
     }
   </script>
 </body>
