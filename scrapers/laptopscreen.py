@@ -29,7 +29,6 @@ def scrape_laptopscreen(query):
         return []
     prod_soup = BeautifulSoup(prod_html, "html.parser")
     price_tag = prod_soup.select_one("span.price")
-main
     price = parse_price(price_tag.get_text()) if price_tag else 0.0
     in_stock = item.find(string=lambda s: s and "out of stock" in s.lower()) is None
     image = (
