@@ -24,6 +24,7 @@ def scrape_laptopscreen(query):
     link = urljoin(BASE, link_tag.get("href", "")) if link_tag else search_url
     title = link_tag.get_text(strip=True) if link_tag else query
 
+
     price = parse_price(price_tag.get_text()) if price_tag else 0.0
     in_stock = item.find(string=lambda s: s and "out of stock" in s.lower()) is None
     image = (
