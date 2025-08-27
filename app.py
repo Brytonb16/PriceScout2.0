@@ -1,4 +1,5 @@
 
+import logging
 import os
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
@@ -8,6 +9,7 @@ from scrapers.laptopscreen import scrape_laptopscreen
 from scrapers.mobilesentrix import scrape_mobilesentrix
 
 app = Flask(__name__)
+app.logger.setLevel(logging.INFO)
 CORS(app)
 
 @app.route('/')
@@ -20,10 +22,19 @@ def search():
     in_stock_only = request.args.get("inStock", "false").lower() == "true"
 
     results = []
-    results += scrape_mobilesentrix(query)
-    results += scrape_fixez(query)
-    results += scrape_mengtor(query)
-    results += scrape_laptopscreen(query)
+    sources = [
+        ("MobileSentrix", scrape_mobilesentrix),
+        ("Fixez", scrape_fixez),
+        ("Mengtor", scrape_mengtor),
+        ("Laptopscreen", scrape_laptopscreen),
+    ]
+    for name, scraper in sources:
+        try:
+            res = scraper(query)
+            app.logger.info("%s returned %d items", name, len(res))
+            results += res
+        except Exception:
+            app.logger.exception("Error scraping %s", name)
 
     if in_stock_only:
         results = [r for r in results if r["in_stock"]]
