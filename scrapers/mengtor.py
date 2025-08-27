@@ -1,4 +1,4 @@
-from urllib.parse import urljoin
+from urllib.parse import urljoin, quote_plus
 from bs4 import BeautifulSoup
 from .utils import safe_get, parse_price
 
@@ -6,29 +6,31 @@ BASE = "https://www.mengtor.com"
 
 
 def scrape_mengtor(query):
-    search_url = f"{BASE}/search?q={query}"
+    search_url = f"{BASE}/search?q={quote_plus(query)}"
     html = safe_get(search_url)
     if not html:
         return []
 
     soup = BeautifulSoup(html, "html.parser")
-    link_tag = soup.select_one("a.product-item-link")
-    if not link_tag:
+    item = soup.select_one("li.product-item")
+    if not item:
         return []
 
-    link = urljoin(BASE, link_tag.get("href", ""))
-    title = link_tag.get_text(strip=True)
+    link_tag = item.select_one("a.product-item-link") or item.select_one("a")
+    price_tag = item.select_one("span.price")
+    image_tag = item.select_one("img")
+
+    link = urljoin(BASE, link_tag.get("href", "")) if link_tag else search_url
+    title = link_tag.get_text(strip=True) if link_tag else query
 
     prod_html = safe_get(link)
     if not prod_html:
         return []
     prod_soup = BeautifulSoup(prod_html, "html.parser")
     price_tag = prod_soup.select_one("span.price")
+main
     price = parse_price(price_tag.get_text()) if price_tag else 0.0
-    in_stock = (
-        prod_soup.find(string=lambda s: s and "out of stock" in s.lower()) is None
-    )
-    image_tag = prod_soup.select_one("img")
+    in_stock = item.find(string=lambda s: s and "out of stock" in s.lower()) is None
     image = (
         urljoin(BASE, image_tag["src"])
         if image_tag and image_tag.has_attr("src")
@@ -37,7 +39,7 @@ def scrape_mengtor(query):
 
     return [
         {
-            "title": title or query,
+            "title": title,
             "price": price,
             "in_stock": in_stock,
             "source": "Mengtor",
