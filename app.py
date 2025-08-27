@@ -22,19 +22,34 @@ def search():
     in_stock_only = request.args.get("inStock", "false").lower() == "true"
 
     results = []
-    sources = [
-        ("MobileSentrix", scrape_mobilesentrix),
-        ("Fixez", scrape_fixez),
-        ("Mengtor", scrape_mengtor),
-        ("Laptopscreen", scrape_laptopscreen),
-    ]
-    for name, scraper in sources:
-        try:
-            res = scraper(query)
-            app.logger.info("%s returned %d items", name, len(res))
-            results += res
-        except Exception:
-            app.logger.exception("Error scraping %s", name)
+
+    try:
+        res = scrape_mobilesentrix(query)
+        app.logger.info("MobileSentrix returned %d items", len(res))
+        results += res
+    except Exception:
+        app.logger.exception("Error scraping MobileSentrix")
+
+    try:
+        res = scrape_fixez(query)
+        app.logger.info("Fixez returned %d items", len(res))
+        results += res
+    except Exception:
+        app.logger.exception("Error scraping Fixez")
+
+    try:
+        res = scrape_mengtor(query)
+        app.logger.info("Mengtor returned %d items", len(res))
+        results += res
+    except Exception:
+        app.logger.exception("Error scraping Mengtor")
+
+    try:
+        res = scrape_laptopscreen(query)
+        app.logger.info("Laptopscreen returned %d items", len(res))
+        results += res
+    except Exception:
+        app.logger.exception("Error scraping Laptopscreen")
 
     if in_stock_only:
         results = [r for r in results if r["in_stock"]]
