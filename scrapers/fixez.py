@@ -22,6 +22,7 @@ def scrape_fixez(query):
 
     link = urljoin(BASE, link_tag.get("href", "")) if link_tag else search_url
     title = link_tag.get_text(strip=True) if link_tag else query
+
     price = parse_price(price_tag.get_text()) if price_tag else 0.0
     in_stock = item.find(string=lambda s: s and "out of stock" in s.lower()) is None
     image = (
@@ -29,6 +30,20 @@ def scrape_fixez(query):
         if image_tag and image_tag.has_attr("src")
         else "https://via.placeholder.com/100"
     )
+
+    # Try to refine details from the product page; fall back to search info on failure
+    prod_html = safe_get(link) if link_tag else None
+    if prod_html:
+        prod_soup = BeautifulSoup(prod_html, "html.parser")
+        prod_price = prod_soup.select_one("span.price")
+        if prod_price:
+            price = parse_price(prod_price.get_text())
+        in_stock = prod_soup.find(
+            string=lambda s: s and "out of stock" in s.lower()
+        ) is None
+        prod_img = prod_soup.select_one("img")
+        if prod_img and prod_img.has_attr("src"):
+            image = urljoin(BASE, prod_img["src"])
 
     return [
         {
