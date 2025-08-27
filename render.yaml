@@ -1,2 +1,3 @@
-startCommand: python app.py
-buildCommand: playwright install --with-deps
+startCommand: >-
+  playwright install chromium --with-deps &&
+  python app.py
