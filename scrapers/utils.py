@@ -1,7 +1,6 @@
+import logging
 import re
 import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 
 # Use a full desktop browser header to avoid basic bot blocking
 HEADERS = {
@@ -13,16 +12,45 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
 }
+logger = logging.getLogger(__name__)
 
 
 def safe_get(url, params=None):
-    """Fetch *url* and return the text body, or an empty string on failure."""
+    """Fetch *url* and return the text body, or ``None`` on failure."""
     try:
         resp = requests.get(url, params=params, headers=HEADERS, timeout=10)
         resp.raise_for_status()
         return resp.text
     except Exception:
-        return ""
+        logger.exception("Request failed for %s", url)
+        return None
+
+
+def render_page(url, wait_selector=None):
+    """Use Playwright to render *url* and return the HTML content.
+
+    If ``wait_selector`` is provided, the function waits for the selector to
+    appear before returning the page content. ``None`` is returned on any
+    failure.
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(url, timeout=15000)
+            if wait_selector:
+                try:
+                    page.wait_for_selector(wait_selector, timeout=5000)
+                except Exception:
+                    logger.warning("Selector %s not found for %s", wait_selector, url)
+            content = page.content()
+            browser.close()
+            return content
+    except Exception:
+        logger.exception("Playwright failed for %s", url)
+        return None
 
 
 def parse_price(text):
