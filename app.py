@@ -22,7 +22,7 @@ def search():
     in_stock_only = request.args.get("inStock", "false").lower() == "true"
 
     results = []
-    # Aggregate results from multiple vendor scrapers.
+<
     sources = [
         ("MobileSentrix", scrape_mobilesentrix),
         ("Fixez", scrape_fixez),
@@ -30,11 +30,6 @@ def search():
         ("Laptopscreen", scrape_laptopscreen),
     ]
 
-    for name, scraper in sources:
-        try:
-            res = scraper(query)
-            app.logger.info("%s returned %d items", name, len(res))
-            results.extend(res)
         except Exception:
             app.logger.exception("Error scraping %s", name)
 
