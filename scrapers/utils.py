@@ -30,8 +30,9 @@ def render_page(url, wait_selector=None):
     """Use Playwright to render *url* and return the HTML content.
 
     If ``wait_selector`` is provided, the function waits for the selector to
-    appear before returning the page content. ``None`` is returned on any
-    failure.
+    appear before returning the page content. If Playwright is unavailable or
+    rendering fails, the function falls back to a static fetch via
+    :func:`safe_get` and returns that HTML instead of ``None``.
     """
     try:
         from playwright.sync_api import sync_playwright
@@ -50,7 +51,8 @@ def render_page(url, wait_selector=None):
             return content
     except Exception:
         logger.exception("Playwright failed for %s", url)
-        return None
+        logger.info("Falling back to static fetch for %s", url)
+        return safe_get(url)
 
 
 def parse_price(text):
