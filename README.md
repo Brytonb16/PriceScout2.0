@@ -8,8 +8,11 @@ Install the required dependencies and Playwright browsers:
 
 ```bash
 pip install -r requirements.txt
-playwright install
+playwright install --with-deps chromium
 ```
+
+If deploying to a service like Render, ensure the Playwright browsers are
+installed during the build step so the scrapers can launch Chromium.
 
 Start the development server:
 
