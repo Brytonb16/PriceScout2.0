@@ -9,14 +9,7 @@ def scrape_fixez(query):
     search_url = f"{BASE}/search?keywords={query}"
     html = safe_get(search_url)
     if not html:
-        return [{
-            "title": f"Fixez sample result for '{query}'",
-            "price": 19.99,
-            "in_stock": True,
-            "source": "Fixez",
-            "link": search_url,
-            "image": "https://via.placeholder.com/100",
-        }]
+        return []
 
     soup = BeautifulSoup(html, "html.parser")
     link_tag = soup.select_one("a.product-item-link")
@@ -27,6 +20,8 @@ def scrape_fixez(query):
     title = link_tag.get_text(strip=True)
 
     prod_html = safe_get(link)
+    if not prod_html:
+        return []
     prod_soup = BeautifulSoup(prod_html, "html.parser")
     price_tag = prod_soup.select_one("span.price")
     price = parse_price(price_tag.get_text()) if price_tag else 0.0
