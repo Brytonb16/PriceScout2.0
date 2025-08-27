@@ -26,5 +26,28 @@ def safe_get(url, params=None):
 
 
 def parse_price(text):
-    match = re.search(r"([0-9]+(?:\.[0-9]+)?)", text.replace(",", ""))
-    return float(match.group(1)) if match else 0.0
+    """Extract a numeric price from *text*.
+
+    Common lead-in phrases such as "From" or "Starting at" are stripped
+    before parsing. When a price range like "$10-$20" is supplied, the
+    average of the bounds is returned. If no numbers can be found, ``0.0`` is
+    returned.
+    """
+
+    # Remove helpful but non-numeric phrases
+    normalized = re.sub(r"\b(from|starting at)\b", "", text, flags=re.I)
+
+    # Normalise dash types and remove thousands separators
+    normalized = normalized.replace("–", "-").replace(",", "")
+
+    # Find all numbers in the string
+    numbers = re.findall(r"([0-9]+(?:\.[0-9]+)?)", normalized)
+    if not numbers:
+        return 0.0
+
+    # If a range is detected, return the average of the first two numbers
+    if "-" in normalized and len(numbers) >= 2:
+        values = [float(n) for n in numbers[:2]]
+        return sum(values) / len(values)
+
+    return float(numbers[0])
