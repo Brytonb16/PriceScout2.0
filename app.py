@@ -3,7 +3,8 @@ import logging
 import os
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
-from openai_search import search_openai
+
+from search import search_products
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
@@ -20,12 +21,8 @@ def search():
     query = request.args.get("q", "")
     in_stock_only = request.args.get("inStock", "false").lower() == "true"
 
-    try:
-        results = search_openai(query)
-        app.logger.info("OpenAI returned %d items", len(results))
-    except Exception:
-        app.logger.exception("Error querying OpenAI")
-        results = []
+    results = search_products(query)
+    app.logger.info("Search backend returned %d items", len(results))
 
     if in_stock_only:
         results = [r for r in results if r.get("in_stock")]

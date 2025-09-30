@@ -1,6 +1,8 @@
 # PriceScout
 
-Fully deployable Flask app that now uses OpenAI for product search.
+Fully deployable Flask app that now uses OpenAI for product search, with the
+original site scrapers kept as an automatic fallback in case the AI response
+cannot be parsed.
 
 ## Usage
 
@@ -20,4 +22,7 @@ Start the development server:
 
 ```bash
 python app.py
+
+If the OpenAI request fails or returns no items, the backend will fall back to
+scraping the partner sites so searches still surface results.
 ```
