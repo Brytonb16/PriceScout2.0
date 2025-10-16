@@ -1,25 +1,28 @@
 # PriceScout
 
-Fully deployable with Flask, Playwright, scrapers, and working UI.
+Fully deployable Flask app that now uses OpenAI for product search, with the
+original site scrapers kept as an automatic fallback in case the AI response
+cannot be parsed.
 
 ## Usage
 
-Install the required dependencies and Playwright browsers:
+Install the required dependencies:
 
 ```bash
 pip install -r requirements.txt
-playwright install --with-deps chromium
 ```
 
-If deploying to a service like Render, ensure the Playwright browsers are
-installed during the build step so the scrapers can launch Chromium.
+Set your OpenAI API key before starting the server:
 
-If the browser cannot be installed or Playwright fails at runtime, the
-scrapers will automatically fall back to a standard HTTP request so results are
-still returned whenever possible.
+```bash
+export OPENAI_API_KEY="sk-your-key"
+```
 
 Start the development server:
 
 ```bash
 python app.py
+
+If the OpenAI request fails or returns no items, the backend will fall back to
+scraping the partner sites so searches still surface results.
 ```
