@@ -20,4 +20,7 @@ Start the development server:
 
 ```bash
 python app.py
+
+If the OpenAI request fails or returns no items, the backend will fall back to
+scraping the partner sites so searches still surface results.
 ```
