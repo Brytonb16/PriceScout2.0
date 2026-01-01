@@ -1,26 +1,21 @@
-# PriceScout
+# Repair Parts Scout
 
-Fully deployable Flask app that now uses OpenAI for product search.
+An AI-powered Flask app that hunts down repair and replacement parts across suppliers and surfaces the best-priced options first.
 
-## Usage
+## Quick start
 
-Install the required dependencies:
+1. Install dependencies
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Export your OpenAI credentials (any compatible chat model is supported via `OPENAI_MODEL`)
+   ```bash
+   export OPENAI_API_KEY="sk-your-key"
+   export OPENAI_MODEL="gpt-4o-mini"  # optional override
+   ```
+3. Run the server
+   ```bash
+   python app.py
+   ```
 
-```bash
-pip install -r requirements.txt
-```
-
-Set your OpenAI API key before starting the server:
-
-```bash
-export OPENAI_API_KEY="sk-your-key"
-```
-
-Start the development server:
-
-```bash
-python app.py
-
-If the OpenAI request fails or returns no items, the backend will fall back to
-scraping the partner sites so searches still surface results.
-```
+Open http://localhost:5000 and enter a part name (for example, “iPhone 13 screen replacement kit”). Results are requested from OpenAI first, automatically sorted by price, and annotated with a “Best price” badge. If AI results are unavailable the legacy scrapers provide a fallback catalog.
