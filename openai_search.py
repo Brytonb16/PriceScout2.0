@@ -6,8 +6,13 @@ openai.api_key = os.environ.get("OPENAI_API_KEY")
 MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 
 PROMPT_TEMPLATE = (
-    "Provide a JSON array of product search results for the query '{query}'. "
-    "Each item should have title, price, in_stock, source, link, and image." )
+    "You help technicians find replacement and repair parts. "
+    "Return a JSON array of 6-10 offers for the search '{query}'. "
+    "Each item must include: title, price (as a number), in_stock (boolean), "
+    "source (store name), link (product URL), and image (product photo). "
+    "Prioritize reputable vendors, avoid accessories, and sort items by price "
+    "from lowest to highest so the best deals appear first."
+)
 
 
 def search_openai(query: str):
