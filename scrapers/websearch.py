@@ -74,9 +74,22 @@ def _preview_image_for(url: str) -> str | None:
     return None
 
 
-def _parse_results(html: str) -> List[Dict[str, object]]:
+def _is_repair_guide(title: str, snippet: str | None) -> bool:
+    text = f"{title} {snippet or ''}".lower()
+    guide_indicators = (
+        "repair guide",
+        "ifixit",
+        "how to",
+        "tutorial",
+        "step-by-step",
+    )
+    return any(indicator in text for indicator in guide_indicators)
+
+
+def _parse_results(html: str, query: str) -> List[Dict[str, object]]:
     soup = BeautifulSoup(html, "html.parser")
     results: List[Dict[str, object]] = []
+    allow_guides = "guide" in query.lower()
 
     for block in soup.select("div.result"):
         link_el = block.select_one("a.result__a")
@@ -84,7 +97,8 @@ def _parse_results(html: str) -> List[Dict[str, object]]:
             continue
 
         href = _resolve_link(link_el.get("href"))
-        if not href:
+        source = _domain_for(href)
+        if not href or source.endswith("duckduckgo.com"):
             continue
 
         title = link_el.get_text(" ", strip=True)
@@ -93,11 +107,14 @@ def _parse_results(html: str) -> List[Dict[str, object]]:
         )
         snippet = snippet_el.get_text(" ", strip=True) if snippet_el else None
 
+        if not allow_guides and _is_repair_guide(title, snippet):
+            continue
+
         results.append(
             {
                 "title": title,
                 "link": href,
-                "source": _domain_for(href),
+                "source": source,
                 "in_stock": False,
                 "price": None,
                 "image": None,
@@ -127,7 +144,7 @@ def scrape_websearch(query: str) -> Iterable[Dict[str, object]]:
         logger.warning("Web search did not return HTML for query '%s'", query)
         return []
 
-    results = _parse_results(html)
+    results = _parse_results(html, query)
 
     for item in results[:MAX_PREVIEW_FETCHES]:
         if item.get("image"):

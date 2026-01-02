@@ -15,7 +15,7 @@ SAMPLE_HTML = """
 
 
 def test_parse_results_extracts_basic_fields():
-    parsed = websearch._parse_results(SAMPLE_HTML)
+    parsed = websearch._parse_results(SAMPLE_HTML, "iphone battery")
     assert parsed[0]["title"] == "Part A"
     assert parsed[0]["link"] == "https://example.com/part-a"
     assert parsed[0]["source"] == "example.com"
@@ -35,7 +35,7 @@ def test_parse_results_decodes_redirects():
     </div>
     """
 
-    parsed = websearch._parse_results(html)
+    parsed = websearch._parse_results(html, "screen replacement")
     assert parsed[0]["link"] == "https://shop.example.com/item"
     assert parsed[0]["source"] == "shop.example.com"
 
