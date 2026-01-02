@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Callable, Dict, Iterable, List
 
-from openai_search import search_openai
 from scrapers.fixez import scrape_fixez
 from scrapers.laptopscreen import scrape_laptopscreen
 from scrapers.mengtor import scrape_mengtor
@@ -42,23 +41,13 @@ def _run_scrapers(query: str) -> List[Dict[str, object]]:
 def search_products(query: str) -> List[Dict[str, object]]:
     """Return search results for *query*.
 
-    The OpenAI backend is attempted first to supply rich cross-site matches.
-    If that returns no items (or fails), the legacy scrapers are invoked as a
-    fallback so the frontend still receives data.
+    All vendor scrapers are queried to provide real product listings from the
+    supported sites. This avoids fabricated AI responses and ensures we always
+    return the concrete offers we can scrape.
     """
 
     if not query.strip():
         return []
 
-    ai_results = []
-    try:
-        ai_results = list(search_openai(query))
-    except Exception:  # pragma: no cover - defensive logging
-        logger.exception("OpenAI search failed")
-
-    if ai_results:
-        return ai_results
-
-    logger.info("OpenAI returned no results; falling back to scrapers")
     return _run_scrapers(query)
 
