@@ -1,4 +1,5 @@
 import logging
+import math
 import re
 from urllib.parse import quote_plus, urljoin
 
@@ -45,11 +46,21 @@ def _matches_query(title: str, query: str) -> bool:
         return True
 
     title_tokens = _normalize_tokens(title)
-    matches = sum(1 for token in tokens if token in title_tokens)
-    required_matches = max(1, (len(tokens) * 7 + 9) // 10)  # ceil(0.7 * len)
-    similarity = matches / len(tokens)
 
-    return matches >= required_matches or similarity >= 0.75
+    # Require longer/more distinctive tokens to be present to avoid loosely
+    # related accessories (e.g., power boards for a power supply search).
+    mandatory_tokens = {token for token in tokens if len(token) >= 6}
+    if mandatory_tokens and not mandatory_tokens.issubset(title_tokens):
+        return False
+
+    matches = sum(1 for token in tokens if token in title_tokens)
+    required_matches = max(1, math.ceil(len(tokens) * 0.8))
+
+    if matches >= required_matches:
+        return True
+
+    similarity = matches / len(tokens)
+    return similarity >= 0.85
 
 
 def scrape_fixez(query):
