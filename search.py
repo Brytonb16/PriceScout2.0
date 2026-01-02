@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 Scraper = Callable[[str], Iterable[Dict[str, object]]]
 
+PRIORITY_VENDORS = ("mobilesentrix", "amazon", "ebay")
+
 
 SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
     ("MobileSentrix", scrape_mobilesentrix),
@@ -60,6 +62,28 @@ def _deduplicate_results(results: List[Dict[str, object]]) -> List[Dict[str, obj
     return deduped
 
 
+def _price_sort_key(item: Dict[str, object]) -> float:
+    for key in ("price_value", "price"):
+        value = item.get(key)
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            continue
+
+    return float("inf")
+
+
+def _sort_results_by_priority(results: List[Dict[str, object]]) -> List[Dict[str, object]]:
+    def priority_index(item: Dict[str, object]) -> tuple[int, int]:
+        source = str(item.get("source", "")).lower()
+        for index, vendor in enumerate(PRIORITY_VENDORS):
+            if vendor in source:
+                return 0, index
+        return 1, len(PRIORITY_VENDORS)
+
+    return sorted(results, key=lambda item: (*priority_index(item), _price_sort_key(item)))
+
+
 def search_products(query: str) -> List[Dict[str, object]]:
     """Return search results for *query*.
 
@@ -72,5 +96,6 @@ def search_products(query: str) -> List[Dict[str, object]]:
         return []
 
     results = _run_scrapers(query)
-    return _deduplicate_results(results)
+    deduped = _deduplicate_results(results)
+    return _sort_results_by_priority(deduped)
 
