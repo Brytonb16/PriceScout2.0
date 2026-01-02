@@ -8,7 +8,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 from bs4 import BeautifulSoup
 
-from scrapers.utils import safe_get
+from scrapers.utils import parse_price, safe_get
 
 logger = logging.getLogger(__name__)
 
@@ -48,15 +48,17 @@ def _resolve_link(href: str) -> str:
     return href
 
 
-def _preview_image_for(url: str) -> str | None:
-    """Fetch a representative image for ``url`` using open graph tags."""
+def _preview_details_for(url: str) -> Dict[str, object]:
+    """Fetch lightweight preview details such as image and price for ``url``."""
 
     html = safe_get(url)
     if not html:
-        return None
+        return {}
 
     soup = BeautifulSoup(html, "html.parser")
-    selectors = [
+    details: Dict[str, object] = {}
+
+    image_selectors = [
         "meta[property='og:image']",
         "meta[name='og:image']",
         "meta[name='twitter:image']",
@@ -64,14 +66,41 @@ def _preview_image_for(url: str) -> str | None:
         "link[rel='image_src']",
     ]
 
-    for selector in selectors:
+    for selector in image_selectors:
         tag = soup.select_one(selector)
         if tag:
             content = tag.get("content") or tag.get("href")
             if content:
-                return content
+                details["image"] = content
+                break
 
-    return None
+    price_selectors = [
+        "meta[property='product:price:amount']",
+        "meta[property='og:price:amount']",
+        "meta[name='price']",
+        "meta[itemprop='price']",
+    ]
+
+    for selector in price_selectors:
+        tag = soup.select_one(selector)
+        if tag:
+            raw_price = tag.get("content") or tag.get("value")
+            if raw_price:
+                details["price"] = raw_price.strip()
+                price_value = parse_price(raw_price)
+                if price_value:
+                    details["price_value"] = price_value
+                break
+
+    return details
+
+
+def _preview_image_for(url: str) -> str | None:
+    """Return only the preview image URL for ``url`` for backward-compatibility."""
+
+    details = _preview_details_for(url)
+    image = details.get("image")
+    return str(image) if image else None
 
 
 def _is_repair_guide(title: str, snippet: str | None) -> bool:
@@ -147,11 +176,14 @@ def scrape_websearch(query: str) -> Iterable[Dict[str, object]]:
     results = _parse_results(html, query)
 
     for item in results[:MAX_PREVIEW_FETCHES]:
-        if item.get("image"):
-            continue
+        preview = _preview_details_for(item["link"])
 
-        preview = _preview_image_for(item["link"])
-        if preview:
-            item["image"] = preview
+        if preview.get("image") and not item.get("image"):
+            item["image"] = preview["image"]
+
+        if preview.get("price") and not item.get("price"):
+            item["price"] = preview["price"]
+            if preview.get("price_value") is not None:
+                item["price_value"] = preview["price_value"]
 
     return results
