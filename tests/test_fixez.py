@@ -47,3 +47,32 @@ def test_matches_query_prefers_high_overlap(monkeypatch):
 
     assert len(results) == 1
     assert "Joy-Con" in results[0]["title"]
+
+
+def test_matches_query_dislikes_loose_power_results(monkeypatch):
+    html = """
+    <ul>
+      <li class="product-item">
+        <a class="product-item-link" href="/power-board">Power Board for Xbox Series X</a>
+        <span class="price">$24.99</span>
+        <img src="//images/board.jpg" />
+      </li>
+      <li class="product-item">
+        <a class="product-item-link" href="/power-cable">Power Cable for Xbox Series X</a>
+        <span class="price">$12.99</span>
+        <img src="//images/cable.jpg" />
+      </li>
+      <li class="product-item">
+        <a class="product-item-link" href="/power-supply">Xbox Series X Power Supply Replacement</a>
+        <span class="price">$69.99</span>
+        <img src="//images/supply.jpg" />
+      </li>
+    </ul>
+    """
+
+    monkeypatch.setattr(fixez, "render_page", lambda *_args, **_kwargs: html)
+
+    results = fixez.scrape_fixez("xbox series x power supply")
+
+    assert len(results) == 1
+    assert "Power Supply" in results[0]["title"]
