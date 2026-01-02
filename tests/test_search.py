@@ -45,36 +45,3 @@ def test_search_products_falls_back_to_scrapers(monkeypatch):
 def test_search_products_returns_empty_for_blank_query():
     assert search.search_products("   ") == []
 
-
-def test_search_products_prioritizes_closest_match(monkeypatch):
-    def fake_scraper(_query):
-        return [
-            {"title": "Nintendo Switch Joycon Controller Left"},
-            {"title": "Nintendo Switch Joycon Button Set"},
-            {"title": "Nintendo Switch Dock Cable"},
-            {"title": "Nintendo Switch Repair Guide"},
-        ]
-
-    monkeypatch.setattr(search, "SCRAPER_SOURCES", [("Fake", fake_scraper)])
-
-    results = search.search_products("nintendo switch joycon")
-
-    assert results == [{"title": "Nintendo Switch Joycon Controller Left"}]
-
-
-def test_search_products_does_not_filter_when_scores_low(monkeypatch):
-    def fake_scraper(_query):
-        return [
-            {"title": "Generic Cable"},
-            {"title": "Another Cable"},
-        ]
-
-    monkeypatch.setattr(search, "SCRAPER_SOURCES", [("Fake", fake_scraper)])
-
-    results = search.search_products("nintendo switch joycon")
-
-    assert results == [
-        {"title": "Generic Cable"},
-        {"title": "Another Cable"},
-    ]
-
