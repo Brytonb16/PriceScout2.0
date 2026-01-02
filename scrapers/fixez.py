@@ -8,20 +8,43 @@ BASE = "https://www.fixez.com"
 logger = logging.getLogger(__name__)
 
 
-def _matches_query(title: str, query: str) -> bool:
-    """Return ``True`` when *title* is a reasonable match for *query*.
+def _normalize_tokens(text: str) -> set[str]:
+    """Tokenize *text* into normalized words for fuzzy matching.
 
-    At least half of the alphanumeric query tokens (minimum one) must appear in
-    the product title to avoid flooding the results with unrelated listings.
+    Tokens shorter than three characters are ignored. For plural words we also
+    add a singular variant to improve matching between query and title.
     """
 
-    tokens = [token for token in re.split(r"\W+", query.lower()) if len(token) >= 3]
+    tokens: set[str] = set()
+    for token in re.split(r"\W+", text.lower()):
+        if len(token) < 3:
+            continue
+
+        tokens.add(token)
+
+        if token.endswith("es") and len(token) > 4:
+            tokens.add(token[:-2])
+        elif token.endswith("s") and len(token) > 3:
+            tokens.add(token[:-1])
+
+    return tokens
+
+
+def _matches_query(title: str, query: str) -> bool:
+    """Return ``True`` when *title* closely matches *query*.
+
+    At least ~70% of the query tokens (minimum one) must appear in the product
+    title. This keeps results relevant for multi-word searches such as console
+    accessory kits while staying resilient to pluralization differences.
+    """
+
+    tokens = _normalize_tokens(query)
     if not tokens:
         return True
 
-    title_tokens = set(re.split(r"\W+", title.lower()))
+    title_tokens = _normalize_tokens(title)
     matches = sum(1 for token in tokens if token in title_tokens)
-    required_matches = max(1, (len(tokens) + 1) // 2)
+    required_matches = max(1, (len(tokens) * 7 + 9) // 10)  # ceil(0.7 * len)
 
     return matches >= required_matches
 
