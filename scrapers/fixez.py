@@ -8,13 +8,15 @@ logger = logging.getLogger(__name__)
 
 
 def scrape_fixez(query):
-    search_url = f"{BASE}/search?keywords={quote_plus(query)}"
+    search_url = f"{BASE}/catalogsearch/result/?q={quote_plus(query)}"
     html = render_page(search_url, "li.product-item")
     if not html:
         return []
 
     soup = BeautifulSoup(html, "html.parser")
-    items = soup.select("li.product-item") or soup.select("div.product-item")
+    items = soup.select("li.product-item, li.item.product.product-item") or soup.select(
+        "div.product-item, div.item.product"
+    )
     if not items:
         logger.warning("Fixez: no product items found for %s", query)
         return []
@@ -22,7 +24,7 @@ def scrape_fixez(query):
     results = []
     for item in items:
         link_tag = item.select_one("a.product-item-link") or item.select_one("a")
-        price_tag = item.select_one("span.price")
+        price_tag = item.select_one("span.price") or item.select_one("span[data-price]")
         image_tag = item.select_one("img")
         if not link_tag:
             logger.warning("Fixez: missing link tag, skipping item")
@@ -30,7 +32,8 @@ def scrape_fixez(query):
 
         link = urljoin(BASE, link_tag.get("href", ""))
         title = link_tag.get_text(strip=True) or query
-        price = parse_price(price_tag.get_text()) if price_tag else 0.0
+        raw_price = price_tag.get_text() if price_tag else None
+        price = parse_price(raw_price) if raw_price else 0.0
         in_stock = item.find(string=lambda s: s and "out of stock" in s.lower()) is None
         image = (
             urljoin(BASE, image_tag["src"])
