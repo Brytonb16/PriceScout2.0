@@ -139,6 +139,16 @@
         box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.18);
       }
 
+      select {
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        background: var(--card);
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
       button.primary {
         padding: 14px 18px;
         border-radius: 12px;
@@ -352,6 +362,13 @@
                 <input type="checkbox" id="inStockOnly" />
                 <span>Show in-stock offers only</span>
               </label>
+              <label class="checkbox">
+                <span>Sort by</span>
+                <select id="sortSelect" aria-label="Sort results">
+                  <option value="match">Closest match, then price</option>
+                  <option value="price">Lowest price first</option>
+                </select>
+              </label>
               <div class="chips" aria-label="Suggested searches">
                 <span class="chip" data-query="Galaxy S22 charging port">Galaxy S22 charging port</span>
                 <span class="chip" data-query="MacBook Pro battery A2338">MacBook Pro battery A2338</span>
@@ -373,9 +390,11 @@
       const form = document.getElementById('searchForm');
       const input = document.getElementById('searchInput');
       const inStockToggle = document.getElementById('inStockOnly');
+      const sortSelect = document.getElementById('sortSelect');
       const resultsEl = document.getElementById('results');
       const messageEl = document.getElementById('message');
       const statusText = document.getElementById('statusText');
+      let lastQuery = '';
 
       const formatPrice = (item) => {
         if (typeof item.price === 'number') return `$${item.price.toFixed(2)}`;
@@ -435,17 +454,21 @@
 
       const searchParts = async (query) => {
         if (!query.trim()) return;
+        lastQuery = query;
         setStatus('Searching suppliers...');
         setMessage('');
         resultsEl.innerHTML = '';
 
         try {
-          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&inStock=${inStockToggle.checked}`);
+          const res = await fetch(
+            `/api/search?q=${encodeURIComponent(query)}&inStock=${inStockToggle.checked}&sort=${encodeURIComponent(sortSelect.value)}`
+          );
           if (!res.ok) throw new Error('Request failed');
           const data = await res.json();
           if (!Array.isArray(data)) throw new Error('Unexpected response format');
           renderResults(data);
-          setStatus(`Showing ${data.length} option${data.length === 1 ? '' : 's'} sorted by best pricing.`);
+          const sortLabel = sortSelect.options[sortSelect.selectedIndex].textContent;
+          setStatus(`Showing ${data.length} option${data.length === 1 ? '' : 's'} sorted by ${sortLabel.toLowerCase()}.`);
         } catch (err) {
           console.error(err);
           setStatus('');
@@ -456,6 +479,12 @@
       form.addEventListener('submit', (event) => {
         event.preventDefault();
         searchParts(input.value);
+      });
+
+      sortSelect.addEventListener('change', () => {
+        if (lastQuery.trim()) {
+          searchParts(lastQuery);
+        }
       });
 
       document.querySelectorAll('.chip').forEach((chip) => {
