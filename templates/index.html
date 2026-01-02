@@ -243,6 +243,11 @@
         color: #b91c1c;
       }
 
+      .tag.neutral {
+        background: rgba(79, 96, 115, 0.12);
+        color: var(--ink);
+      }
+
       .badge {
         padding: 6px 10px;
         background: rgba(14, 165, 233, 0.12);
@@ -272,6 +277,12 @@
         color: var(--brand-strong);
         text-decoration: none;
         font-weight: 600;
+      }
+
+      .snippet {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
       }
 
       .empty, .error {
@@ -376,21 +387,30 @@
       const badgeForStock = (inStock) =>
         `<span class="tag ${inStock ? 'success' : 'warn'}">${inStock ? 'In stock' : 'Check availability'}</span>`;
 
+      const badgeForResult = (item) => {
+        if (item.stock_label) {
+          return `<span class="tag neutral">${item.stock_label}</span>`;
+        }
+        return badgeForStock(!!item.in_stock);
+      };
+
       const renderResult = (item) => {
         const price = formatPrice(item);
         const best = item.best_price ? '<span class="badge">Best price</span>' : '';
         const safeImage = item.image || 'https://placehold.co/600x400?text=Repair+Part';
+        const snippet = item.snippet ? `<p class="snippet">${item.snippet}</p>` : '';
 
         return `
           <article class="card">
             <img class="thumb" src="${safeImage}" alt="${item.title || 'Product image'}" loading="lazy" />
             <div class="price-line">${price} ${best}</div>
             <div class="title">${item.title || 'Untitled part'}</div>
+            ${snippet}
             <div class="meta">
               <span class="vendor">${item.source || 'Unknown vendor'}</span>
               <a href="${item.link || '#'}" target="_blank" rel="noreferrer">View offer →</a>
             </div>
-            ${badgeForStock(item.in_stock)}
+            ${badgeForResult(item)}
           </article>
         `;
       };

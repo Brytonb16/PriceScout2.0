@@ -9,6 +9,7 @@ from scrapers.fixez import scrape_fixez
 from scrapers.laptopscreen import scrape_laptopscreen
 from scrapers.mengtor import scrape_mengtor
 from scrapers.mobilesentrix import scrape_mobilesentrix
+from scrapers.websearch import scrape_websearch
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
     ("Fixez", scrape_fixez),
     ("Mengtor", scrape_mengtor),
     ("Laptopscreen", scrape_laptopscreen),
+    ("Web", scrape_websearch),
 ]
 
 
