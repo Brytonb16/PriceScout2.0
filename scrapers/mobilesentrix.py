@@ -1,24 +1,20 @@
 import logging
 from urllib.parse import quote_plus, urljoin
+
 from bs4 import BeautifulSoup
-from .utils import render_page, parse_price
+
+from .utils import parse_price, render_page, safe_get
 
 BASE = "https://www.mobilesentrix.com"
 logger = logging.getLogger(__name__)
 
 
-def scrape_mobilesentrix(query):
-    search_url = f"{BASE}/catalogsearch/result/?q={quote_plus(query)}"
-    html = render_page(search_url, "li.product-item")
-    if not html:
-        return []
-
+def _parse_items(html: str, query: str):
     soup = BeautifulSoup(html, "html.parser")
     items = soup.select("li.product-item, li.item.product.product-item") or soup.select(
         "div.product-item, div.item.product"
     )
     if not items:
-        logger.warning("MobileSentrix: no product items found for %s", query)
         return []
 
     results = []
@@ -53,3 +49,23 @@ def scrape_mobilesentrix(query):
         )
 
     return results
+
+
+def scrape_mobilesentrix(query):
+    search_url = f"{BASE}/catalogsearch/result/?q={quote_plus(query)}"
+    html = render_page(search_url, "li.product-item")
+    if html:
+        parsed = _parse_items(html, query)
+        if parsed:
+            return parsed
+        logger.info("MobileSentrix: falling back to static fetch for %s", query)
+
+    static_html = safe_get(search_url)
+    if not static_html:
+        return []
+
+    parsed = _parse_items(static_html, query)
+    if not parsed:
+        logger.warning("MobileSentrix: no product items found for %s", query)
+
+    return parsed
