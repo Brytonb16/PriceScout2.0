@@ -1,8 +1,10 @@
 import logging
 import re
 from urllib.parse import quote_plus, urljoin
+
 from bs4 import BeautifulSoup
-from .utils import render_page, parse_price
+
+from .utils import parse_price, render_page
 
 BASE = "https://www.fixez.com"
 logger = logging.getLogger(__name__)
@@ -45,8 +47,9 @@ def _matches_query(title: str, query: str) -> bool:
     title_tokens = _normalize_tokens(title)
     matches = sum(1 for token in tokens if token in title_tokens)
     required_matches = max(1, (len(tokens) * 7 + 9) // 10)  # ceil(0.7 * len)
+    similarity = matches / len(tokens)
 
-    return similarity >= 0.75
+    return matches >= required_matches or similarity >= 0.75
 
 
 def scrape_fixez(query):

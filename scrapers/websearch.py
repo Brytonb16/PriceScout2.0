@@ -16,6 +16,18 @@ logger = logging.getLogger(__name__)
 SEARCH_URL = "https://duckduckgo.com/html/"
 MAX_RESULTS = 10
 MAX_PREVIEW_FETCHES = 5
+PRIORITY_PREVIEW_DOMAINS = (
+    "amazon.com",
+    "www.amazon.com",
+    "smile.amazon.com",
+    "ebay.com",
+    "www.ebay.com",
+    "ebay.co.uk",
+    "www.ebay.co.uk",
+    "ebay.ca",
+    "www.ebay.ca",
+    "mobilesentrix.com",
+)
 
 
 def _domain_for(url: str) -> str:
@@ -49,6 +61,67 @@ def _resolve_link(href: str) -> str:
     return href
 
 
+def _extract_price_text(soup: BeautifulSoup, domain: str) -> str | None:
+    """Return a price string for the given ``domain`` if present."""
+
+    domain = domain.lower()
+
+    def find_by_selectors(selectors):
+        for selector in selectors:
+            tag = soup.select_one(selector)
+            if not tag:
+                continue
+            value = (
+                tag.get("content")
+                or tag.get("value")
+                or tag.get_text(strip=True)
+                or tag.get("aria-label")
+            )
+            if value and re.search(r"\d", value):
+                return value.strip()
+        return None
+
+    common_price_selectors = [
+        "meta[property='product:price:amount']",
+        "meta[property='og:price:amount']",
+        "meta[name='price']",
+        "meta[itemprop='price']",
+        "span.price",
+        "span[data-price]",
+        "meta[name='twitter:data1']",
+    ]
+
+    amazon_selectors = [
+        "span.a-offscreen",
+        "span#priceblock_ourprice",
+        "span#priceblock_dealprice",
+        "span#priceblock_saleprice",
+        "span.a-price > span.a-offscreen",
+        "span.a-price-whole",
+    ]
+
+    ebay_selectors = [
+        "span[itemprop='price']",
+        "span#prcIsum",
+        "span#mm-saleDscPrc",
+        "span#prcIsum_bidPrice",
+        "span.s-item__price",
+    ]
+
+    domain_specific = []
+    if "amazon." in domain:
+        domain_specific = amazon_selectors
+    elif "ebay." in domain:
+        domain_specific = ebay_selectors
+    elif "mobilesentrix" in domain:
+        # Occasionally MobileSentrix pages are encountered via web search as well
+        domain_specific = ["span.price", "span[data-price]"]
+
+    return find_by_selectors(domain_specific or common_price_selectors) or find_by_selectors(
+        common_price_selectors
+    )
+
+
 def _preview_details_for(url: str) -> Dict[str, object]:
     """Fetch lightweight preview details such as image and price for ``url``."""
 
@@ -75,35 +148,11 @@ def _preview_details_for(url: str) -> Dict[str, object]:
                 details["image"] = content
                 break
 
-    price_selectors = [
-        "meta[property='product:price:amount']",
-        "meta[property='og:price:amount']",
-        "meta[name='price']",
-        "meta[itemprop='price']",
-        "span.price",
-        "span[data-price]",
-        "meta[name='twitter:data1']",
-    ]
-
-    for selector in price_selectors:
-        tag = soup.select_one(selector)
-        if not tag:
-            continue
-
-        raw_price = (
-            tag.get("content")
-            or tag.get("value")
-            or tag.get_text(strip=True)
-            or tag.get("aria-label")
-        )
-
-        if not raw_price:
-            continue
-
-        details["price"] = raw_price.strip()
-        price_value = parse_price(raw_price)
-        details["price_value"] = price_value
-        break
+    domain = urlparse(url).netloc
+    raw_price = _extract_price_text(soup, domain)
+    if raw_price:
+        details["price"] = raw_price
+        details["price_value"] = parse_price(raw_price)
 
     if "price" not in details:
         text = soup.get_text(" ", strip=True)
@@ -196,7 +245,14 @@ def scrape_websearch(query: str) -> Iterable[Dict[str, object]]:
 
     results = _parse_results(html, query)
 
-    for item in results[:MAX_PREVIEW_FETCHES]:
+    for index, item in enumerate(results):
+        domain = item.get("source", "").lower()
+        should_preview = index < MAX_PREVIEW_FETCHES or any(
+            domain.endswith(prioritized) for prioritized in PRIORITY_PREVIEW_DOMAINS
+        )
+        if not should_preview:
+            continue
+
         preview = _preview_details_for(item["link"])
 
         if preview.get("image") and not item.get("image"):
