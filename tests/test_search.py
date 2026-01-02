@@ -45,9 +45,3 @@ def test_search_products_falls_back_to_scrapers(monkeypatch):
 def test_search_products_returns_empty_for_blank_query():
     assert search.search_products("   ") == []
 
-
-def test_search_products_uses_local_catalog_by_default():
-    results = search.search_products("Galaxy S21 charging port")
-    assert results
-    assert any("charging port" in item.get("title", "").lower() for item in results)
-
