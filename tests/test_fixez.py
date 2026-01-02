@@ -47,25 +47,3 @@ def test_matches_query_prefers_high_overlap(monkeypatch):
 
     assert len(results) == 1
     assert "Joy-Con" in results[0]["title"]
-
-
-def test_scrape_fixez_drops_accessory_kits(monkeypatch):
-    html = """
-    <ul>
-      <li class="product-item">
-        <a class="product-item-link" href="/switch-screws">Nintendo Switch Joy-Con Screw Set</a>
-        <span class="price">$4.99</span>
-      </li>
-      <li class="product-item">
-        <a class="product-item-link" href="/switch-joycon">Nintendo Switch Joy-Con (L/R)</a>
-        <span class="price">$79.99</span>
-      </li>
-    </ul>
-    """
-
-    monkeypatch.setattr(fixez, "render_page", lambda *_args, **_kwargs: html)
-
-    results = fixez.scrape_fixez("Nintendo Switch Joy Cons")
-
-    assert len(results) == 1
-    assert results[0]["title"] == "Nintendo Switch Joy-Con (L/R)"

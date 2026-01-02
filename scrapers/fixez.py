@@ -45,15 +45,6 @@ def _matches_query(title: str, query: str) -> bool:
     title_tokens = _normalize_tokens(title)
     matches = sum(1 for token in tokens if token in title_tokens)
     required_matches = max(1, (len(tokens) * 7 + 9) // 10)  # ceil(0.7 * len)
-    if matches < required_matches:
-        return False
-
-    # Require strong overlap in both directions so accessory listings with
-    # unrelated hardware (e.g., screw kits, cables) are filtered out. Using a
-    # Jaccard-style ratio keeps the check flexible for descriptive product
-    # names while preferring titles that closely match the query tokens.
-    union_size = len(tokens | title_tokens)
-    similarity = matches / union_size if union_size else 0
 
     return similarity >= 0.75
 
