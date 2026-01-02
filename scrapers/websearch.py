@@ -26,6 +26,12 @@ PRIORITY_PREVIEW_DOMAINS = (
     "www.ebay.co.uk",
     "ebay.ca",
     "www.ebay.ca",
+    "bestbuy.com",
+    "www.bestbuy.com",
+    "microsoft.com",
+    "www.microsoft.com",
+    "gamersrepair.com",
+    "www.gamersrepair.com",
     "mobilesentrix.com",
 )
 
@@ -108,14 +114,34 @@ def _extract_price_text(soup: BeautifulSoup, domain: str) -> str | None:
         "span.s-item__price",
     ]
 
+    bestbuy_selectors = [
+        "div.priceView-hero-price span[aria-hidden='true']",
+        "div.priceView-hero-price span",
+        "div.priceView-legal-price span",
+        "div.pricing-price__regular-price",
+    ]
+
+    microsoft_selectors = [
+        "span[itemprop='price']",
+        "meta[itemprop='price']",
+        "div.ProductPrice-module__price",
+        "span.c-price",
+    ]
+
     domain_specific = []
     if "amazon." in domain:
         domain_specific = amazon_selectors
     elif "ebay." in domain:
         domain_specific = ebay_selectors
+    elif "bestbuy." in domain:
+        domain_specific = bestbuy_selectors
+    elif "microsoft." in domain:
+        domain_specific = microsoft_selectors
     elif "mobilesentrix" in domain:
         # Occasionally MobileSentrix pages are encountered via web search as well
         domain_specific = ["span.price", "span[data-price]"]
+    elif "gamersrepair" in domain:
+        domain_specific = ["span.price", "meta[property='og:price:amount']"]
 
     return find_by_selectors(domain_specific or common_price_selectors) or find_by_selectors(
         common_price_selectors
