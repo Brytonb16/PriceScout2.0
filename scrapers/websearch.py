@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Dict, Iterable, List
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -79,18 +80,38 @@ def _preview_details_for(url: str) -> Dict[str, object]:
         "meta[property='og:price:amount']",
         "meta[name='price']",
         "meta[itemprop='price']",
+        "span.price",
+        "span[data-price]",
+        "meta[name='twitter:data1']",
     ]
 
     for selector in price_selectors:
         tag = soup.select_one(selector)
-        if tag:
-            raw_price = tag.get("content") or tag.get("value")
-            if raw_price:
-                details["price"] = raw_price.strip()
-                price_value = parse_price(raw_price)
-                if price_value:
-                    details["price_value"] = price_value
-                break
+        if not tag:
+            continue
+
+        raw_price = (
+            tag.get("content")
+            or tag.get("value")
+            or tag.get_text(strip=True)
+            or tag.get("aria-label")
+        )
+
+        if not raw_price:
+            continue
+
+        details["price"] = raw_price.strip()
+        price_value = parse_price(raw_price)
+        details["price_value"] = price_value
+        break
+
+    if "price" not in details:
+        text = soup.get_text(" ", strip=True)
+        match = re.search(r"\$\s*([0-9]+(?:\.[0-9]+)?)", text)
+        if match:
+            raw_price = match.group(0)
+            details["price"] = raw_price
+            details["price_value"] = parse_price(raw_price)
 
     return details
 
