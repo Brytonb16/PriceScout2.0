@@ -10,8 +10,9 @@ PROMPT_TEMPLATE = (
     "Return a JSON array of 6-10 offers for the search '{query}'. "
     "Each item must include: title, price (as a number), in_stock (boolean), "
     "source (store name), link (product URL), and image (product photo). "
-    "Prioritize reputable vendors, avoid accessories, and sort items by price "
-    "from lowest to highest so the best deals appear first."
+    "Prioritize MobileSentrix, Amazon, and Ebay listings whenever available, "
+    "avoid accessories, and sort items by price from lowest to highest so the "
+    "best deals appear first."
 )
 
 
