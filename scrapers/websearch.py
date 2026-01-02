@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import Dict, Iterable, List
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 from bs4 import BeautifulSoup
 
@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 SEARCH_URL = "https://duckduckgo.com/html/"
 MAX_RESULTS = 10
+MAX_PREVIEW_FETCHES = 5
 
 
 def _domain_for(url: str) -> str:
@@ -22,6 +23,55 @@ def _domain_for(url: str) -> str:
         return parsed.netloc or "Web"
     except Exception:  # pragma: no cover - defensive
         return "Web"
+
+
+def _resolve_link(href: str) -> str:
+    """Return the destination URL for DuckDuckGo redirect links."""
+
+    if not href:
+        return ""
+
+    try:
+        parsed = urlparse(href)
+    except Exception:  # pragma: no cover - defensive
+        return href
+
+    # DuckDuckGo wraps outbound links with /l/?uddg=<encoded>
+    if parsed.netloc.endswith("duckduckgo.com") and parsed.path.startswith("/l/"):
+        try:
+            params = parse_qs(parsed.query)
+            target = params.get("uddg", [href])[0]
+            return unquote(target)
+        except Exception:  # pragma: no cover - defensive
+            return href
+
+    return href
+
+
+def _preview_image_for(url: str) -> str | None:
+    """Fetch a representative image for ``url`` using open graph tags."""
+
+    html = safe_get(url)
+    if not html:
+        return None
+
+    soup = BeautifulSoup(html, "html.parser")
+    selectors = [
+        "meta[property='og:image']",
+        "meta[name='og:image']",
+        "meta[name='twitter:image']",
+        "meta[property='twitter:image']",
+        "link[rel='image_src']",
+    ]
+
+    for selector in selectors:
+        tag = soup.select_one(selector)
+        if tag:
+            content = tag.get("content") or tag.get("href")
+            if content:
+                return content
+
+    return None
 
 
 def _parse_results(html: str) -> List[Dict[str, object]]:
@@ -33,7 +83,7 @@ def _parse_results(html: str) -> List[Dict[str, object]]:
         if not link_el:
             continue
 
-        href = link_el.get("href")
+        href = _resolve_link(link_el.get("href"))
         if not href:
             continue
 
@@ -77,4 +127,14 @@ def scrape_websearch(query: str) -> Iterable[Dict[str, object]]:
         logger.warning("Web search did not return HTML for query '%s'", query)
         return []
 
-    return _parse_results(html)
+    results = _parse_results(html)
+
+    for item in results[:MAX_PREVIEW_FETCHES]:
+        if item.get("image"):
+            continue
+
+        preview = _preview_image_for(item["link"])
+        if preview:
+            item["image"] = preview
+
+    return results
