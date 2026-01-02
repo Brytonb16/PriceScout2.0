@@ -46,7 +46,7 @@ def _matches_query(title: str, query: str) -> bool:
     matches = sum(1 for token in tokens if token in title_tokens)
     required_matches = max(1, (len(tokens) * 7 + 9) // 10)  # ceil(0.7 * len)
 
-    return matches >= required_matches
+    return similarity >= 0.75
 
 
 def scrape_fixez(query):
