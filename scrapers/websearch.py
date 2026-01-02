@@ -211,47 +211,10 @@ def _is_repair_guide(title: str, snippet: str | None) -> bool:
     return any(indicator in text for indicator in guide_indicators)
 
 
-def _is_forum_or_qna(title: str, snippet: str | None) -> bool:
-    text = f"{title} {snippet or ''}".lower()
-    forum_indicators = (
-        "forum",
-        "community",
-        "discussion",
-        "thread",
-        "reddit",
-        "stack overflow",
-        "q&a",
-    )
-    return any(indicator in text for indicator in forum_indicators)
-
-
-def _is_spec_sheet(title: str, snippet: str | None) -> bool:
-    text = f"{title} {snippet or ''}".lower()
-    spec_indicators = (
-        "spec sheet",
-        "specification",
-        "specifications",
-        "specs",
-        "datasheet",
-        "data sheet",
-        "technical specs",
-        "manual",
-        "pdf",
-    )
-    return any(indicator in text for indicator in spec_indicators)
-
-
-def _is_non_product_page(title: str, snippet: str | None) -> bool:
-    return (
-        _is_repair_guide(title, snippet)
-        or _is_forum_or_qna(title, snippet)
-        or _is_spec_sheet(title, snippet)
-    )
-
-
 def _parse_results(html: str, query: str) -> List[Dict[str, object]]:
     soup = BeautifulSoup(html, "html.parser")
     results: List[Dict[str, object]] = []
+    allow_guides = "guide" in query.lower()
 
     for block in soup.select("div.result"):
         link_el = block.select_one("a.result__a")
@@ -269,7 +232,7 @@ def _parse_results(html: str, query: str) -> List[Dict[str, object]]:
         )
         snippet = snippet_el.get_text(" ", strip=True) if snippet_el else None
 
-        if _is_non_product_page(title, snippet):
+        if not allow_guides and _is_repair_guide(title, snippet):
             continue
 
         results.append(
