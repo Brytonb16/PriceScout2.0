@@ -40,6 +40,26 @@ def _run_scrapers(query: str) -> List[Dict[str, object]]:
     return results
 
 
+def _deduplicate_results(results: List[Dict[str, object]]) -> List[Dict[str, object]]:
+    seen_links = set()
+    deduped: List[Dict[str, object]] = []
+
+    for item in results:
+        link = str(item.get("link", "")).strip()
+        title = str(item.get("title", "")).strip()
+
+        normalized = link.rstrip("/").lower() if link else ""
+        key = normalized or title.lower()
+
+        if not key or key in seen_links:
+            continue
+
+        seen_links.add(key)
+        deduped.append(item)
+
+    return deduped
+
+
 def search_products(query: str) -> List[Dict[str, object]]:
     """Return search results for *query*.
 
@@ -51,5 +71,6 @@ def search_products(query: str) -> List[Dict[str, object]]:
     if not query.strip():
         return []
 
-    return _run_scrapers(query)
+    results = _run_scrapers(query)
+    return _deduplicate_results(results)
 
