@@ -65,6 +65,34 @@ def test_scrape_websearch_uses_safe_get(monkeypatch):
     assert "q" in calls[0][1]
 
 
+def test_parse_results_filters_non_product_pages():
+    html = """
+    <div class="results">
+      <div class="result">
+        <a class="result__a" href="https://example.com/guide">Repair Guide</a>
+        <div class="result__snippet">Step-by-step tutorial.</div>
+      </div>
+      <div class="result">
+        <a class="result__a" href="https://forum.example.com/thread">Forum Thread</a>
+        <div class="result__snippet">Community discussion</div>
+      </div>
+      <div class="result">
+        <a class="result__a" href="https://example.com/specs">Device Specs</a>
+        <div class="result__snippet">Technical specifications PDF.</div>
+      </div>
+      <div class="result">
+        <a class="result__a" href="https://store.example.com/part">Replacement Part</a>
+        <div class="result__snippet">Compatible part listing.</div>
+      </div>
+    </div>
+    """
+
+    parsed = websearch._parse_results(html, "iphone screen guide")
+
+    assert len(parsed) == 1
+    assert parsed[0]["link"] == "https://store.example.com/part"
+
+
 def test_priority_domains_always_get_previews(monkeypatch):
     html = """
     <div class="results">
