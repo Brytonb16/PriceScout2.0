@@ -26,6 +26,30 @@ def test_parse_results_extracts_basic_fields():
     assert parsed[1]["source"] == "store.test"
 
 
+def test_parse_results_decodes_redirects():
+    html = """
+    <div class="results">
+      <div class="result">
+        <a class="result__a" href="https://duckduckgo.com/l/?uddg=https%3A%2F%2Fshop.example.com%2Fitem">Redirected</a>
+      </div>
+    </div>
+    """
+
+    parsed = websearch._parse_results(html)
+    assert parsed[0]["link"] == "https://shop.example.com/item"
+    assert parsed[0]["source"] == "shop.example.com"
+
+
+def test_preview_image_for_reads_open_graph(monkeypatch):
+    html = """
+    <html><head><meta property="og:image" content="https://cdn.test/pic.jpg" /></head></html>
+    """
+
+    monkeypatch.setattr(websearch, "safe_get", lambda url: html)
+
+    assert websearch._preview_image_for("https://cdn.test/page") == "https://cdn.test/pic.jpg"
+
+
 def test_scrape_websearch_uses_safe_get(monkeypatch):
     calls = []
 
