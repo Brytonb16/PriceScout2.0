@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import logging
-import os
 from typing import Callable, Dict, Iterable, List
 
-from scrapers.local_catalog import scrape_local_catalog
 from scrapers.fixez import scrape_fixez
 from scrapers.laptopscreen import scrape_laptopscreen
 from scrapers.mengtor import scrape_mengtor
@@ -18,18 +16,13 @@ logger = logging.getLogger(__name__)
 Scraper = Callable[[str], Iterable[Dict[str, object]]]
 
 
-SCRAPER_SOURCES: List[tuple[str, Scraper]] = [("LocalCatalog", scrape_local_catalog)]
-
-if os.getenv("ENABLE_REMOTE_SCRAPERS", "false").lower() == "true":
-    SCRAPER_SOURCES.extend(
-        [
-            ("MobileSentrix", scrape_mobilesentrix),
-            ("Fixez", scrape_fixez),
-            ("Mengtor", scrape_mengtor),
-            ("Laptopscreen", scrape_laptopscreen),
-            ("Web", scrape_websearch),
-        ]
-    )
+SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
+    ("MobileSentrix", scrape_mobilesentrix),
+    ("Fixez", scrape_fixez),
+    ("Mengtor", scrape_mengtor),
+    ("Laptopscreen", scrape_laptopscreen),
+    ("Web", scrape_websearch),
+]
 
 
 def _run_scrapers(query: str) -> List[Dict[str, object]]:
