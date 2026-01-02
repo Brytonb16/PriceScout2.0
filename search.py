@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import re
+from difflib import SequenceMatcher
 from typing import Callable, Dict, Iterable, List
 
 from scrapers.fixez import scrape_fixez
@@ -60,6 +62,88 @@ def _deduplicate_results(results: List[Dict[str, object]]) -> List[Dict[str, obj
     return deduped
 
 
+def _normalize_tokens(text: str) -> List[str]:
+    normalized = re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+    if not normalized:
+        return []
+    return [token for token in normalized.split(" ") if token]
+
+
+def _score_result(query_tokens: List[str], query_key: str, item: Dict[str, object]) -> float:
+    title = str(item.get("title", ""))
+    title_tokens = _normalize_tokens(title)
+    if not title_tokens:
+        return 0.0
+
+    collapsed_title = re.sub(r"[^a-z0-9]+", "", title.lower())
+
+    matched = 0
+    for token in query_tokens:
+        if token in title_tokens or token in collapsed_title:
+            matched += 1
+
+    coverage = matched / len(query_tokens) if query_tokens else 0.0
+    density = matched / len(title_tokens)
+
+    sequence_ratio = SequenceMatcher(None, query_key, collapsed_title).ratio()
+
+    accessory_keywords = {
+        "cable",
+        "cables",
+        "button",
+        "buttons",
+        "guide",
+        "manual",
+        "spec",
+        "specification",
+        "tutorial",
+        "housing",
+        "shell",
+        "strap",
+        "case",
+    }
+
+    penalty_tokens = [token for token in title_tokens if token not in query_tokens]
+    accessory_penalty = sum(1 for token in penalty_tokens if token in accessory_keywords)
+
+    score = 0.5 * coverage + 0.2 * density + 0.3 * sequence_ratio
+    score -= 0.08 * accessory_penalty
+    score -= min(0.2, 0.02 * len(penalty_tokens))
+
+    return max(score, 0.0)
+
+
+def _filter_closest_matches(results: List[Dict[str, object]], query: str) -> List[Dict[str, object]]:
+    query_tokens = _normalize_tokens(query)
+    query_key = re.sub(r"[^a-z0-9]+", "", query.lower())
+
+    if not query_tokens or not query_key:
+        return results
+
+    scored: List[tuple[float, Dict[str, object]]] = []
+    for item in results:
+        score = _score_result(query_tokens, query_key, item)
+        scored.append((score, item))
+
+    if not scored:
+        return results
+
+    best_score = max(score for score, _ in scored)
+    if best_score < 0.6:
+        return results
+
+    threshold = best_score - 0.05
+
+    filtered = [item for score, item in scored if score >= threshold]
+
+    if filtered:
+        return filtered
+
+    # Fallback to the single best match when filtering removes everything.
+    scored.sort(key=lambda entry: entry[0], reverse=True)
+    return [scored[0][1]]
+
+
 def search_products(query: str) -> List[Dict[str, object]]:
     """Return search results for *query*.
 
@@ -72,5 +156,6 @@ def search_products(query: str) -> List[Dict[str, object]]:
         return []
 
     results = _run_scrapers(query)
-    return _deduplicate_results(results)
+    deduped = _deduplicate_results(results)
+    return _filter_closest_matches(deduped, query)
 
