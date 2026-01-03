@@ -5,7 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Callable, Dict, Iterable, List
 
+from openai_search import rewrite_query_with_vendors, summarize_offers_with_openai
 from scrapers.fixez import scrape_fixez
+from scrapers.google_search import scrape_google_search
 from scrapers.laptopscreen import scrape_laptopscreen
 from scrapers.mengtor import scrape_mengtor
 from scrapers.mobilesentrix import scrape_mobilesentrix
@@ -23,6 +25,7 @@ SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
     ("Fixez", scrape_fixez),
     ("Mengtor", scrape_mengtor),
     ("Laptopscreen", scrape_laptopscreen),
+    ("Google", scrape_google_search),
     ("Web", scrape_websearch),
 ]
 
@@ -95,7 +98,14 @@ def search_products(query: str) -> List[Dict[str, object]]:
     if not query.strip():
         return []
 
-    results = _run_scrapers(query)
+    rewritten = rewrite_query_with_vendors(query)
+    queries = [rewritten.get("primary", query)] + list(rewritten.get("boosted", []))
+
+    results: List[Dict[str, object]] = []
+    for variant in queries:
+        results.extend(_run_scrapers(variant))
+
     deduped = _deduplicate_results(results)
-    return _sort_results_by_priority(deduped)
+    sorted_results = _sort_results_by_priority(deduped)
+    return summarize_offers_with_openai(query, sorted_results)
 
