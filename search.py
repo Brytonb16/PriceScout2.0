@@ -128,7 +128,7 @@ def search_products(query: str) -> List[Dict[str, object]]:
         return []
 
     rewritten = rewrite_query_with_vendors(query)
-    queries = _prepare_queries(query, rewritten)
+    queries = [rewritten.get("primary", query)] + list(rewritten.get("boosted", []))
 
     results: List[Dict[str, object]] = []
     for variant in queries:
