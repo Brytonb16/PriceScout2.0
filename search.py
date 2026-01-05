@@ -45,6 +45,35 @@ def _run_scrapers(query: str) -> List[Dict[str, object]]:
     return results
 
 
+def _prepare_queries(query: str, rewritten: Dict[str, object]) -> List[str]:
+    """Return a small, de-duplicated list of query variants.
+
+    We cap the variants to avoid long serial scraper runs that slow or block the
+    UI if any single upstream site is sluggish. The primary query is always
+    included, followed by up to two boosted vendor-aware variants.
+    """
+
+    variants = [rewritten.get("primary", query), *rewritten.get("boosted", [])]
+    prepared: List[str] = []
+    seen: set[str] = set()
+
+    for candidate in variants:
+        normalized = str(candidate or "").strip()
+        if not normalized:
+            continue
+        lowered = normalized.lower()
+        if lowered in seen:
+            continue
+
+        prepared.append(normalized)
+        seen.add(lowered)
+
+        if len(prepared) >= 3:
+            break
+
+    return prepared
+
+
 def _deduplicate_results(results: List[Dict[str, object]]) -> List[Dict[str, object]]:
     seen_links = set()
     deduped: List[Dict[str, object]] = []
