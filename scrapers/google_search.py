@@ -104,7 +104,7 @@ def scrape_google_search(query: str) -> Iterable[Dict[str, object]]:
     if not query.strip():
         return []
 
-    html = safe_get(SEARCH_URL, params={"q": query, "hl": "en"})
+    html = safe_get(SEARCH_URL, params={"q": query, "hl": "en"}, timeout=4)
     if not html:
         logger.warning("Google search did not return HTML for query '%s'", query)
         return []
