@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from typing import Callable, Dict, Iterable, List
 
 from openai_search import rewrite_query_with_vendors, summarize_offers_with_openai
@@ -19,6 +21,9 @@ Scraper = Callable[[str], Iterable[Dict[str, object]]]
 
 PRIORITY_VENDORS = ("mobilesentrix", "amazon", "ebay")
 
+DEFAULT_SEARCH_BUDGET_SECONDS = 25
+PER_SCRAPER_TIMEOUT_SECONDS = 8
+
 
 SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
     ("MobileSentrix", scrape_mobilesentrix),
@@ -30,17 +35,37 @@ SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
 ]
 
 
-def _run_scrapers(query: str) -> List[Dict[str, object]]:
+def _run_scrapers(query: str, *, deadline: float | None = None) -> List[Dict[str, object]]:
     results: List[Dict[str, object]] = []
-    for name, scraper in SCRAPER_SOURCES:
-        try:
-            scraper_results = list(scraper(query))
-        except Exception:  # pragma: no cover - defensive logging
-            logger.exception("Error scraping %s", name)
-            continue
 
-        logger.info("%s returned %d items", name, len(scraper_results))
-        results.extend(scraper_results)
+    with ThreadPoolExecutor(max_workers=len(SCRAPER_SOURCES)) as executor:
+        def _execute(scraper_func: Scraper) -> List[Dict[str, object]]:
+            return list(scraper_func(query))
+
+        futures = [(name, executor.submit(_execute, scraper)) for name, scraper in SCRAPER_SOURCES]
+
+        for name, future in futures:
+            if deadline is not None:
+                time_left = deadline - time.monotonic()
+                if time_left <= 0:
+                    logger.warning("Skipping %s scraper: search budget exceeded", name)
+                    continue
+            else:
+                time_left = None
+
+            timeout = min(PER_SCRAPER_TIMEOUT_SECONDS, time_left) if time_left else PER_SCRAPER_TIMEOUT_SECONDS
+
+            try:
+                scraper_results = future.result(timeout=timeout)
+            except TimeoutError:  # pragma: no cover - defensive logging
+                logger.warning("%s scraper timed out", name)
+                continue
+            except Exception:  # pragma: no cover - defensive logging
+                logger.exception("Error scraping %s", name)
+                continue
+
+            logger.info("%s returned %d items", name, len(scraper_results))
+            results.extend(scraper_results)
 
     return results
 
