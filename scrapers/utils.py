@@ -15,16 +15,10 @@ HEADERS = {
 logger = logging.getLogger(__name__)
 
 
-def safe_get(url, params=None, *, timeout: int | float = 10):
-    """Fetch *url* and return the text body, or ``None`` on failure.
-
-    A configurable ``timeout`` keeps flaky endpoints from slowing down the
-    overall search request. Individual scrapers can lower the default when
-    reaching out to brittle providers like Google Search so failures fail
-    fast instead of blocking the whole response cycle.
-    """
+def safe_get(url, params=None):
+    """Fetch *url* and return the text body, or ``None`` on failure."""
     try:
-        resp = requests.get(url, params=params, headers=HEADERS, timeout=timeout)
+        resp = requests.get(url, params=params, headers=HEADERS, timeout=10)
         resp.raise_for_status()
         return resp.text
     except Exception:
