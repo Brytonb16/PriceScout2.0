@@ -153,13 +153,11 @@ def search_products(query: str) -> List[Dict[str, object]]:
         return []
 
     rewritten = rewrite_query_with_vendors(query)
-    queries = _prepare_queries(query, rewritten)
-
-    deadline = time.monotonic() + DEFAULT_SEARCH_BUDGET_SECONDS
+    queries = [rewritten.get("primary", query)] + list(rewritten.get("boosted", []))
 
     results: List[Dict[str, object]] = []
     for variant in queries:
-        results.extend(_run_scrapers(variant, deadline=deadline))
+        results.extend(_run_scrapers(variant))
 
     deduped = _deduplicate_results(results)
     sorted_results = _sort_results_by_priority(deduped)

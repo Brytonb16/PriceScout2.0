@@ -84,17 +84,3 @@ def test_search_products_prioritizes_required_vendors(monkeypatch):
     assert "Amazon" in sources
     assert any("ebay" in str(src).lower() for src in sources)
 
-
-def test_prepare_queries_deduplicates_and_limits(monkeypatch):
-    rewritten = {
-        "primary": "iphone 13 screen",
-        "boosted": ["iphone 13 screen", "iPhone 13 screen MobileSentrix", "", "extra"],
-    }
-
-    prepared = search._prepare_queries("iphone 13 screen", rewritten)
-
-    assert prepared[0] == "iphone 13 screen"
-    assert "iPhone 13 screen MobileSentrix" in prepared
-    assert "extra" in prepared
-    assert len(prepared) == 3
-
