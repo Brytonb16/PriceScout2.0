@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Dict, Iterable, List
 
 from openai_search import rewrite_query_with_vendors, summarize_offers_with_openai
@@ -32,15 +33,27 @@ SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
 
 def _run_scrapers(query: str) -> List[Dict[str, object]]:
     results: List[Dict[str, object]] = []
-    for name, scraper in SCRAPER_SOURCES:
-        try:
-            scraper_results = list(scraper(query))
-        except Exception:  # pragma: no cover - defensive logging
-            logger.exception("Error scraping %s", name)
-            continue
+    ordered_results: Dict[int, List[Dict[str, object]]] = {}
 
-        logger.info("%s returned %d items", name, len(scraper_results))
-        results.extend(scraper_results)
+    with ThreadPoolExecutor(max_workers=len(SCRAPER_SOURCES)) as executor:
+        future_map = {
+            executor.submit(lambda s=scraper: list(s(query))): (index, name)
+            for index, (name, scraper) in enumerate(SCRAPER_SOURCES)
+        }
+
+        for future in as_completed(future_map):
+            index, name = future_map[future]
+            try:
+                scraper_results = future.result()
+            except Exception:  # pragma: no cover - defensive logging
+                logger.exception("Error scraping %s", name)
+                continue
+
+            logger.info("%s returned %d items", name, len(scraper_results))
+            ordered_results[index] = scraper_results
+
+    for index in range(len(SCRAPER_SOURCES)):
+        results.extend(ordered_results.get(index, []))
 
     return results
 
