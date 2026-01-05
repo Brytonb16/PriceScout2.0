@@ -37,7 +37,7 @@ def test_search_products_prefers_openai(monkeypatch):
 
     results = search.search_products("battery")
     assert results == [{"title": "Scraper 1"}, {"title": "Scraper 2"}]
-    assert set(sentinel) == {"scraper-one", "scraper-two"}
+    assert sentinel == ["scraper-one", "scraper-two"]
 
 
 def test_search_products_falls_back_to_scrapers(monkeypatch):
