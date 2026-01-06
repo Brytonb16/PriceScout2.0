@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import logging
 from typing import Dict, Iterable, List
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
-from .utils import parse_price, render_page
+from .utils import parse_price, safe_get
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +61,7 @@ def scrape_amazon(query: str) -> Iterable[Dict[str, object]]:
     if not query.strip():
         return []
 
-    url = f"{SEARCH_URL}?{urlencode({'k': query})}"
-    html = render_page(url, wait_selector="div[data-component-type='s-search-result']")
+    html = safe_get(SEARCH_URL, params={"k": query})
     if not html:
         logger.warning("Amazon search failed for query '%s'", query)
         return []

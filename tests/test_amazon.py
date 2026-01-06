@@ -24,7 +24,7 @@ def test_parse_results_extracts_core_fields():
 
 def test_scrape_amazon_handles_missing_html(monkeypatch, caplog):
     caplog.set_level("INFO")
-    monkeypatch.setattr(amazon, "render_page", lambda url, wait_selector=None: None)
+    monkeypatch.setattr(amazon, "safe_get", lambda url, params=None: None)
 
     assert list(amazon.scrape_amazon("iphone screen")) == []
     assert any("failed" in message for message in caplog.messages)
