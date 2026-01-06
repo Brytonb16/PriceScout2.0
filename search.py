@@ -7,8 +7,6 @@ from typing import Callable, Dict, Iterable, List
 
 from openai_search import rewrite_query_with_vendors, summarize_offers_with_openai
 from scrapers.fixez import scrape_fixez
-from scrapers.amazon import scrape_amazon
-from scrapers.ebay import scrape_ebay
 from scrapers.google_search import scrape_google_search
 from scrapers.laptopscreen import scrape_laptopscreen
 from scrapers.mengtor import scrape_mengtor
@@ -24,8 +22,6 @@ PRIORITY_VENDORS = ("mobilesentrix", "amazon", "ebay")
 
 SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
     ("MobileSentrix", scrape_mobilesentrix),
-    ("Amazon", scrape_amazon),
-    ("Ebay", scrape_ebay),
     ("Fixez", scrape_fixez),
     ("Mengtor", scrape_mengtor),
     ("Laptopscreen", scrape_laptopscreen),
