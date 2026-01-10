@@ -7,12 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
 from typing import Callable, Dict, Iterable, List
 
 from openai_search import rewrite_query_with_vendors, summarize_offers_with_openai
-from scrapers.fixez import scrape_fixez
 from scrapers.google_search import scrape_google_search
-from scrapers.laptopscreen import scrape_laptopscreen
-from scrapers.mengtor import scrape_mengtor
-from scrapers.mobilesentrix import scrape_mobilesentrix
-from scrapers.websearch import scrape_websearch
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +17,7 @@ PRIORITY_VENDORS = ("mobilesentrix", "amazon", "ebay")
 
 
 SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
-    ("MobileSentrix", scrape_mobilesentrix),
-    ("Fixez", scrape_fixez),
-    ("Mengtor", scrape_mengtor),
-    ("Laptopscreen", scrape_laptopscreen),
     ("Google", scrape_google_search),
-    ("Web", scrape_websearch),
 ]
 
 MAX_SCRAPER_WORKERS = 4

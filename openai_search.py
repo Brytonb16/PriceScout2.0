@@ -14,16 +14,16 @@ REQUEST_TIMEOUT_SECONDS = 15
 logger = logging.getLogger(__name__)
 
 REWRITE_TEMPLATE = (
-    "Rewrite the shopper query so MobileSentrix and Fixez are easy to find. "
+    "Rewrite the shopper query so MobileSentrix, Amazon, and Ebay listings are easy to find. "
     "Return JSON with keys 'primary' (concise search string) and 'boosted' "
     "(array of 2-4 vendor-augmented queries that explicitly mention MobileSentrix, "
-    "Fixez, Amazon, and Ebay). Keep the text short and focused on product terms."
+    "Amazon, and Ebay). Keep the text short and focused on product terms."
 )
 
 SUMMARY_TEMPLATE = (
     "You rank repair part listings. Given the shopper query and a JSON array of "
     "offers, return the 10 lowest priced items. Always include at least one "
-    "entry for MobileSentrix, Fixez, Amazon, and Ebay when available in the input. "
+    "entry for MobileSentrix, Amazon, and Ebay when available in the input. "
     "Output JSON only with the original objects in price order."
 )
 
@@ -84,7 +84,7 @@ def _normalize_price_value(item: Dict[str, object]) -> Dict[str, object]:
 
 def _fallback_top_offers(results: Iterable[Dict[str, object]]) -> List[Dict[str, object]]:
     normalized = [_normalize_price_value(item) for item in results]
-    required = ("mobilesentrix", "fixez", "amazon", "ebay")
+    required = ("mobilesentrix", "amazon", "ebay")
 
     def matches_vendor(item, vendor):
         return vendor in str(item.get("source", "")).lower()
