@@ -16,6 +16,17 @@ SEARCH_URL = "https://www.google.com/search"
 MAX_RESULTS = 10
 
 
+def _price_from_snippet(snippet: str | None) -> str | None:
+    if not snippet:
+        return None
+    if "$" not in snippet and "USD" not in snippet.upper():
+        return None
+    price_value = parse_price(snippet)
+    if price_value <= 0:
+        return None
+    return f"${price_value:,.2f}"
+
+
 def _domain_for(url: str) -> str:
     try:
         return urlparse(url).netloc or "Web"
@@ -41,16 +52,18 @@ def _parse_results(html: str) -> List[Dict[str, object]]:
         source = _domain_for(href)
         snippet_el = card.select_one("div.VwiC3b") or card.select_one("div.IsZvec")
         snippet = snippet_el.get_text(" ", strip=True) if snippet_el else None
+        preview_price = _price_from_snippet(snippet)
 
         results.append(
             {
                 "title": title,
                 "link": href,
                 "source": source,
-                "snippet": snippet,
+                "snippet": None,
                 "image": None,
                 "in_stock": False,
-                "price": None,
+                "price": preview_price,
+                "price_value": parse_price(preview_price) if preview_price else None,
                 "stock_label": "Visit site",
             }
         )

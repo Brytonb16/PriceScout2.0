@@ -330,10 +330,10 @@
     <main>
       <section class="hero">
         <div style="position: relative; z-index: 2">
-          <h1>Find repair parts instantly with AI</h1>
+          <h1>Find repair parts instantly with Google + AI</h1>
           <p>
-            Search across trusted suppliers for screens, batteries, tools, and more.
-            We sort results by the best available price so you can get back to the repair faster.
+            Search Google-backed listings for screens, batteries, tools, and more.
+            We prioritize MobileSentrix, Amazon, and Ebay pricing so you can compare faster.
           </p>
           <div class="search-card">
             <form id="searchForm" class="form-row">
@@ -358,7 +358,7 @@
                 <span class="chip" data-query="Nintendo Switch Joy-Con joystick">Nintendo Switch joystick</span>
               </div>
             </div>
-            <div class="status" id="statusText">Type a part name to begin.</div>
+            <div class="status" id="statusText">Type a part name to see Google pricing previews.</div>
           </div>
         </div>
       </section>
@@ -398,14 +398,11 @@
         const price = formatPrice(item);
         const best = item.best_price ? '<span class="badge">Best price</span>' : '';
         const safeImage = item.image || 'https://placehold.co/600x400?text=Repair+Part';
-        const snippet = item.snippet ? `<p class="snippet">${item.snippet}</p>` : '';
-
         return `
           <article class="card">
             <img class="thumb" src="${safeImage}" alt="${item.title || 'Product image'}" loading="lazy" />
             <div class="price-line">${price} ${best}</div>
             <div class="title">${item.title || 'Untitled part'}</div>
-            ${snippet}
             <div class="meta">
               <span class="vendor">${item.source || 'Unknown vendor'}</span>
               <a href="${item.link || '#'}" target="_blank" rel="noreferrer">View offer →</a>
@@ -435,7 +432,7 @@
 
       const searchParts = async (query) => {
         if (!query.trim()) return;
-        setStatus('Searching suppliers...');
+        setStatus('Searching Google listings...');
         setMessage('');
         resultsEl.innerHTML = '';
 
