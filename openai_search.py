@@ -1,13 +1,17 @@
 import json
+import logging
 import os
 from typing import Dict, Iterable, List
 
-import openai
+from openai import OpenAI
 
 from scrapers.utils import parse_price
 
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+REQUEST_TIMEOUT_SECONDS = 15
+
+logger = logging.getLogger(__name__)
 
 REWRITE_TEMPLATE = (
     "Rewrite the shopper query so MobileSentrix and Fixez are easy to find. "
@@ -27,16 +31,23 @@ SUMMARY_TEMPLATE = (
 def _call_chat(prompt: str, user_payload: str) -> str | None:
     """Best-effort call to the configured chat model."""
 
+    if not OPENAI_API_KEY:
+        logger.warning("OpenAI client not configured; skipping request")
+        return None
+
     try:
-        response = openai.ChatCompletion.create(
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        response = client.chat.completions.create(
             model=MODEL,
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": user_payload},
             ],
+            timeout=REQUEST_TIMEOUT_SECONDS,
         )
-        return response["choices"][0]["message"]["content"]
+        return response.choices[0].message.content
     except Exception:
+        logger.exception("OpenAI request failed")
         return None
 
 
@@ -55,15 +66,7 @@ def rewrite_query_with_vendors(query: str) -> Dict[str, object]:
         except Exception:
             pass
 
-    return {
-        "primary": query,
-        "boosted": [
-            f"{query} MobileSentrix",
-            f"{query} Fixez",
-            f"{query} Amazon",
-            f"{query} Ebay",
-        ],
-    }
+    return {"primary": query, "boosted": []}
 
 
 def _normalize_price_value(item: Dict[str, object]) -> Dict[str, object]:

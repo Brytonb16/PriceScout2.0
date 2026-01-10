@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
 from typing import Callable, Dict, Iterable, List
 
 from openai_search import rewrite_query_with_vendors, summarize_offers_with_openai
@@ -29,18 +30,40 @@ SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
     ("Web", scrape_websearch),
 ]
 
+MAX_SCRAPER_WORKERS = 4
+SCRAPER_TIMEOUT_SECONDS = 25
+
+
+def _call_scraper(name: str, scraper: Scraper, query: str) -> List[Dict[str, object]]:
+    try:
+        return list(scraper(query))
+    except Exception:  # pragma: no cover - defensive logging
+        logger.exception("Error scraping %s", name)
+        return []
+
 
 def _run_scrapers(query: str) -> List[Dict[str, object]]:
     results: List[Dict[str, object]] = []
-    for name, scraper in SCRAPER_SOURCES:
-        try:
-            scraper_results = list(scraper(query))
-        except Exception:  # pragma: no cover - defensive logging
-            logger.exception("Error scraping %s", name)
-            continue
+    max_workers = min(MAX_SCRAPER_WORKERS, len(SCRAPER_SOURCES))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(_call_scraper, name, scraper, query): name
+            for name, scraper in SCRAPER_SOURCES
+        }
 
-        logger.info("%s returned %d items", name, len(scraper_results))
-        results.extend(scraper_results)
+        try:
+            for future in as_completed(futures, timeout=SCRAPER_TIMEOUT_SECONDS):
+                name = futures[future]
+                scraper_results = future.result()
+                logger.info("%s returned %d items", name, len(scraper_results))
+                results.extend(scraper_results)
+        except TimeoutError:
+            logger.warning("Timed out waiting for scrapers after %ss", SCRAPER_TIMEOUT_SECONDS)
+        finally:
+            for future, name in futures.items():
+                if not future.done():
+                    future.cancel()
+                    logger.warning("Cancelled scraper %s after timeout", name)
 
     return results
 
@@ -108,4 +131,3 @@ def search_products(query: str) -> List[Dict[str, object]]:
     deduped = _deduplicate_results(results)
     sorted_results = _sort_results_by_priority(deduped)
     return summarize_offers_with_openai(query, sorted_results)
-
