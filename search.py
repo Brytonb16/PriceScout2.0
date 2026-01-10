@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
-import time
 from typing import Callable, Dict, Iterable, List
 
 from openai_search import rewrite_query_with_vendors, summarize_offers_with_openai
@@ -20,9 +18,6 @@ logger = logging.getLogger(__name__)
 Scraper = Callable[[str], Iterable[Dict[str, object]]]
 
 PRIORITY_VENDORS = ("mobilesentrix", "amazon", "ebay")
-
-MAX_QUERY_VARIANTS = int(os.environ.get("MAX_QUERY_VARIANTS", "2"))
-MAX_SEARCH_SECONDS = float(os.environ.get("MAX_SEARCH_SECONDS", "30"))
 
 
 SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
@@ -48,29 +43,6 @@ def _run_scrapers(query: str) -> List[Dict[str, object]]:
         results.extend(scraper_results)
 
     return results
-
-
-def _query_variants(original_query: str) -> List[str]:
-    """Return a bounded list of unique query variants for scraping."""
-
-    rewritten = rewrite_query_with_vendors(original_query)
-    candidates = [rewritten.get("primary", original_query), *rewritten.get("boosted", [])]
-
-    variants: List[str] = []
-    seen = set()
-    for candidate in candidates:
-        variant = str(candidate or "").strip()
-        if not variant:
-            continue
-        key = variant.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        variants.append(variant)
-        if len(variants) >= MAX_QUERY_VARIANTS:
-            break
-
-    return variants
 
 
 def _deduplicate_results(results: List[Dict[str, object]]) -> List[Dict[str, object]]:
@@ -126,19 +98,12 @@ def search_products(query: str) -> List[Dict[str, object]]:
     if not query.strip():
         return []
 
+    rewritten = rewrite_query_with_vendors(query)
+    queries = [rewritten.get("primary", query)] + list(rewritten.get("boosted", []))
+
     results: List[Dict[str, object]] = []
-    deadline = time.monotonic() + MAX_SEARCH_SECONDS
-
-    for variant in _query_variants(query):
-        if time.monotonic() >= deadline:
-            logger.warning("Search deadline reached before running variant '%s'", variant)
-            break
-
+    for variant in queries:
         results.extend(_run_scrapers(variant))
-
-        if time.monotonic() >= deadline:
-            logger.warning("Search deadline reached after variant '%s'", variant)
-            break
 
     deduped = _deduplicate_results(results)
     sorted_results = _sort_results_by_priority(deduped)
