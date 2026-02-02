@@ -468,15 +468,6 @@
         return 0.88;
       };
 
-      const parsePrice = (value) => {
-        if (typeof value === 'number' && !Number.isNaN(value)) return value;
-        if (typeof value === 'string') {
-          const numeric = Number(value.replace(/[^0-9.]/g, ''));
-          return Number.isNaN(numeric) ? 0 : numeric;
-        }
-        return 0;
-      };
-
       const estimateSavingsTier = (total) => {
         if (total < 150) return 'Starter';
         if (total < 500) return 'Balanced';
@@ -571,7 +562,7 @@
       };
 
       const addToCart = (item) => {
-        const unitPrice = parsePrice(item.price_value ?? item.price);
+        const unitPrice = Number(item.price_value || item.price || 0);
         cart.push({
           part_name: item.title || 'Part',
           vendor: item.source || 'Vendor',

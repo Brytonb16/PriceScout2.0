@@ -15,11 +15,7 @@ app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
 CORS(app)
 
-ORDER_DB_PATH = os.environ.get("ORDER_DB_PATH") or os.path.join(
-    app.instance_path,
-    "orders.db",
-)
-DB_AVAILABLE = True
+ORDER_DB_PATH = os.environ.get("ORDER_DB_PATH", os.path.join(app.root_path, "orders.db"))
 
 
 def _get_db() -> sqlite3.Connection:
@@ -29,56 +25,40 @@ def _get_db() -> sqlite3.Connection:
 
 
 def _init_db() -> None:
-    global DB_AVAILABLE
-    try:
-        os.makedirs(app.instance_path, exist_ok=True)
-        with _get_db() as conn:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS orders (
-                    id TEXT PRIMARY KEY,
-                    created_at TEXT NOT NULL,
-                    store_name TEXT NOT NULL,
-                    requester TEXT NOT NULL,
-                    needed_by TEXT,
-                    priority TEXT,
-                    notes TEXT,
-                    status TEXT NOT NULL,
-                    total_estimated REAL NOT NULL
-                )
-                """
+    with _get_db() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS orders (
+                id TEXT PRIMARY KEY,
+                created_at TEXT NOT NULL,
+                store_name TEXT NOT NULL,
+                requester TEXT NOT NULL,
+                needed_by TEXT,
+                priority TEXT,
+                notes TEXT,
+                status TEXT NOT NULL,
+                total_estimated REAL NOT NULL
             )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS order_items (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    order_id TEXT NOT NULL,
-                    part_name TEXT NOT NULL,
-                    vendor TEXT NOT NULL,
-                    quantity INTEGER NOT NULL,
-                    unit_price REAL NOT NULL,
-                    quality_score REAL,
-                    link TEXT,
-                    FOREIGN KEY(order_id) REFERENCES orders(id)
-                )
-                """
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS order_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_id TEXT NOT NULL,
+                part_name TEXT NOT NULL,
+                vendor TEXT NOT NULL,
+                quantity INTEGER NOT NULL,
+                unit_price REAL NOT NULL,
+                quality_score REAL,
+                link TEXT,
+                FOREIGN KEY(order_id) REFERENCES orders(id)
             )
-        DB_AVAILABLE = True
-    except Exception:
-        app.logger.exception("Failed to initialize order database.")
-        DB_AVAILABLE = False
+            """
+        )
 
 
-@app.before_request
-def ensure_db_ready() -> None:
-    if not DB_AVAILABLE:
-        _init_db()
-
-
-def _require_db():
-    if not DB_AVAILABLE:
-        return jsonify({"error": "Order database unavailable."}), 503
-    return None
+_init_db()
 
 
 @app.route('/')
@@ -137,9 +117,6 @@ def _as_float(value: Any, default: Optional[float] = 0.0) -> Optional[float]:
 
 @app.route('/api/orders', methods=['POST'])
 def create_order():
-    db_error = _require_db()
-    if db_error:
-        return db_error
     payload = request.get_json(silent=True) or {}
     store_name = str(payload.get("store_name", "")).strip()
     requester = str(payload.get("requester", "")).strip()
@@ -234,9 +211,6 @@ def create_order():
 
 @app.route('/api/orders', methods=['GET'])
 def list_orders():
-    db_error = _require_db()
-    if db_error:
-        return db_error
     limit = min(int(request.args.get("limit", 25)), 100)
     with _get_db() as conn:
         rows = conn.execute(
@@ -249,9 +223,6 @@ def list_orders():
 
 @app.route('/api/orders/<order_id>', methods=['GET'])
 def get_order(order_id: str):
-    db_error = _require_db()
-    if db_error:
-        return db_error
     with _get_db() as conn:
         order = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
         if not order:
