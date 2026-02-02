@@ -3,25 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Repair Parts Scout</title>
+    <title>PriceScout | Smart Parts Ordering</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
         color-scheme: light;
-        --ink: #0d1b2a;
-        --muted: #4f6073;
-        --brand: #0ea5e9;
-        --brand-strong: #0284c7;
+        --ink: #0f172a;
+        --muted: #475569;
+        --soft: #94a3b8;
+        --brand: #2563eb;
+        --brand-strong: #1d4ed8;
+        --accent: #10b981;
+        --warning: #f97316;
         --surface: #f8fafc;
         --card: #ffffff;
-        --accent: #22c55e;
-        --danger: #ef4444;
-        --shadow: 0 24px 50px rgba(15, 23, 42, 0.12);
+        --shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
       }
 
       * {
@@ -30,437 +31,634 @@
 
       body {
         margin: 0;
-        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-        background: radial-gradient(circle at 10% 20%, #e0f2fe 0, transparent 25%),
-          radial-gradient(circle at 90% 10%, #bae6fd 0, transparent 25%),
-          linear-gradient(180deg, #f8fafc 0, #eef2ff 100%);
+        font-family: "Manrope", system-ui, -apple-system, sans-serif;
         color: var(--ink);
+        background: radial-gradient(circle at 15% 15%, #e0f2fe, transparent 45%),
+          radial-gradient(circle at 85% 15%, #fee2e2, transparent 40%),
+          linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
       }
 
       header {
+        max-width: 1200px;
+        margin: 0 auto;
         padding: 24px 32px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        max-width: 1200px;
-        margin: 0 auto;
+        gap: 16px;
       }
 
-      .brand {
+      .logo {
         display: flex;
         align-items: center;
         gap: 12px;
-        font-weight: 700;
+        font-weight: 800;
         font-size: 20px;
-        letter-spacing: -0.02em;
-        color: var(--ink);
+      }
+
+      .logo span {
+        color: var(--brand-strong);
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
       }
 
       .pill {
-        padding: 6px 12px;
-        background: rgba(14, 165, 233, 0.08);
-        border: 1px solid rgba(14, 165, 233, 0.15);
         border-radius: 999px;
-        font-weight: 600;
-        color: var(--brand-strong);
+        padding: 8px 14px;
         font-size: 12px;
+        font-weight: 700;
+        color: var(--brand-strong);
+        background: rgba(37, 99, 235, 0.12);
       }
 
       main {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 0 32px 72px;
+        padding: 0 32px 80px;
+        display: grid;
+        gap: 32px;
       }
 
       .hero {
         background: var(--card);
-        border-radius: 20px;
+        border-radius: 24px;
         padding: 36px;
         box-shadow: var(--shadow);
+        display: grid;
+        gap: 28px;
         position: relative;
         overflow: hidden;
       }
 
-      .hero:after {
+      .hero::after {
         content: "";
         position: absolute;
         inset: 0;
-        background: radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.15), transparent 45%);
+        background: radial-gradient(circle at 90% 10%, rgba(37, 99, 235, 0.12), transparent 50%);
         pointer-events: none;
       }
 
       .hero h1 {
         margin: 0;
-        font-size: 36px;
-        line-height: 1.2;
-        letter-spacing: -0.03em;
+        font-size: clamp(32px, 5vw, 44px);
+        line-height: 1.1;
       }
 
       .hero p {
-        margin: 12px 0 20px;
+        margin: 8px 0 0;
         color: var(--muted);
         max-width: 720px;
+        font-size: 16px;
       }
 
-      .search-card {
-        margin-top: 24px;
-        background: rgba(14, 165, 233, 0.05);
-        border: 1px solid rgba(14, 165, 233, 0.15);
-        border-radius: 16px;
-        padding: 20px;
+      .hero-grid {
         display: grid;
-        gap: 12px;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
       }
 
-      .form-row {
+      .hero-card {
+        background: rgba(248, 250, 252, 0.9);
+        border-radius: 18px;
+        padding: 18px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .hero-card h3 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+
+      .hero-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      }
+
+      .panel {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+        display: grid;
+        gap: 16px;
+      }
+
+      .panel h2 {
+        margin: 0;
+        font-size: 20px;
+      }
+
+      .panel p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .search-bar {
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 12px;
       }
 
       @media (max-width: 720px) {
-        .form-row {
+        .search-bar {
           grid-template-columns: 1fr;
         }
       }
 
-      input[type="text"] {
-        padding: 14px 16px;
+      input,
+      select,
+      textarea {
+        font-family: inherit;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      input[type="date"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 12px 14px;
         border-radius: 12px;
         border: 1px solid rgba(15, 23, 42, 0.1);
-        font-size: 16px;
-        width: 100%;
-        outline: none;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
-      }
-
-      input[type="text"]:focus {
-        border-color: var(--brand);
-        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.18);
-      }
-
-      button.primary {
-        padding: 14px 18px;
-        border-radius: 12px;
-        border: none;
-        background: linear-gradient(135deg, var(--brand), var(--brand-strong));
-        color: #fff;
-        font-weight: 700;
-        font-size: 16px;
-        cursor: pointer;
-        box-shadow: 0 16px 30px rgba(14, 165, 233, 0.35);
-        transition: transform 0.1s ease, box-shadow 0.2s ease;
-      }
-
-      button.primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 20px 35px rgba(14, 165, 233, 0.35);
-      }
-
-      .options {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-        color: var(--muted);
         font-size: 14px;
       }
 
-      .checkbox {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        cursor: pointer;
+      textarea {
+        min-height: 90px;
       }
 
-      .chips {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
+      button {
+        font-family: inherit;
+        cursor: pointer;
+        border: none;
       }
 
-      .chip {
-        background: var(--card);
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        padding: 8px 12px;
-        border-radius: 999px;
-        cursor: pointer;
-        font-weight: 600;
+      .primary {
+        background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+        color: #fff;
+        font-weight: 700;
+        padding: 12px 18px;
+        border-radius: 12px;
+        box-shadow: 0 18px 30px rgba(37, 99, 235, 0.25);
+      }
+
+      .ghost {
+        background: rgba(15, 23, 42, 0.05);
         color: var(--ink);
-        transition: transform 0.1s ease, box-shadow 0.2s ease;
+        font-weight: 600;
+        padding: 10px 14px;
+        border-radius: 12px;
       }
 
-      .chip:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
-      }
-
-      .grid {
-        display: grid;
-        gap: 16px;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        margin-top: 28px;
-      }
-
-      .card {
-        background: var(--card);
+      .result-card {
+        border: 1px solid rgba(15, 23, 42, 0.08);
         border-radius: 16px;
         padding: 16px;
-        box-shadow: var(--shadow);
         display: grid;
-        gap: 12px;
-        border: 1px solid rgba(15, 23, 42, 0.05);
-      }
-
-      .card .vendor {
-        font-weight: 700;
-        color: var(--ink);
-      }
-
-      .price-line {
-        display: flex;
-        align-items: center;
         gap: 10px;
-        font-size: 18px;
-        font-weight: 700;
+        background: rgba(248, 250, 252, 0.8);
+      }
+
+      .result-card h4 {
+        margin: 0;
+        font-size: 15px;
+      }
+
+      .result-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+        color: var(--muted);
       }
 
       .tag {
         padding: 6px 10px;
-        border-radius: 10px;
-        font-weight: 700;
+        border-radius: 999px;
         font-size: 12px;
-        width: fit-content;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
       }
 
-      .tag.success {
-        background: rgba(34, 197, 94, 0.12);
-        color: #15803d;
+      .tag.good {
+        background: rgba(16, 185, 129, 0.12);
+        color: #047857;
       }
 
       .tag.warn {
-        background: rgba(239, 68, 68, 0.12);
-        color: #b91c1c;
+        background: rgba(249, 115, 22, 0.12);
+        color: #c2410c;
       }
 
-      .tag.neutral {
-        background: rgba(79, 96, 115, 0.12);
-        color: var(--ink);
-      }
-
-      .badge {
-        padding: 6px 10px;
-        background: rgba(14, 165, 233, 0.12);
+      .tag.brand {
+        background: rgba(37, 99, 235, 0.12);
         color: var(--brand-strong);
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 12px;
       }
 
-      .title {
-        font-weight: 700;
-        font-size: 16px;
-        line-height: 1.4;
+      .offer-grid {
+        display: grid;
+        gap: 12px;
       }
 
-      .meta {
-        color: var(--muted);
-        font-size: 14px;
+      .cart-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .cart-item {
+        display: grid;
+        gap: 6px;
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.04);
+      }
+
+      .cart-item-header {
         display: flex;
         justify-content: space-between;
         gap: 8px;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-
-      .meta a {
-        color: var(--brand-strong);
-        text-decoration: none;
         font-weight: 600;
       }
 
-      .snippet {
-        margin: 0;
+      .cart-item small {
         color: var(--muted);
+      }
+
+      .summary {
+        display: grid;
+        gap: 8px;
         font-size: 14px;
       }
 
-      .empty, .error {
-        margin: 28px 0 0;
-        padding: 18px;
-        border-radius: 12px;
-        background: rgba(15, 23, 42, 0.03);
-        color: var(--muted);
-        border: 1px dashed rgba(15, 23, 42, 0.1);
+      .summary strong {
+        font-size: 18px;
       }
 
-      .error {
-        color: #b91c1c;
-        background: rgba(239, 68, 68, 0.05);
-        border-color: rgba(239, 68, 68, 0.3);
+      .empty-state {
+        color: var(--soft);
+        font-size: 14px;
       }
 
       .status {
-        margin-top: 8px;
-        font-size: 14px;
         color: var(--muted);
+        font-size: 13px;
       }
 
-      .thumb {
-        width: 100%;
-        height: 160px;
-        border-radius: 12px;
-        object-fit: cover;
-        background: linear-gradient(135deg, #e2e8f0, #f8fafc);
+      .orders {
+        display: grid;
+        gap: 12px;
+      }
+
+      .order-card {
+        border-radius: 14px;
+        padding: 14px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        display: grid;
+        gap: 6px;
+      }
+
+      footer {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 32px 40px;
+        color: var(--muted);
+        font-size: 13px;
       }
     </style>
   </head>
   <body>
     <header>
-      <div class="brand" aria-label="Repair Parts Scout logo">
+      <div class="logo">
         <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 6.5v5l3 1.5" />
-          <circle cx="12" cy="12" r="9" />
+          <path d="M12 2l3 7h7l-5.5 4 2 7-6-4-6 4 2-7L2 9h7l3-7z" />
         </svg>
-        Repair Parts Scout
+        PriceScout <span>StoreOps</span>
       </div>
-      <span class="pill">AI-powered sourcing</span>
+      <div class="actions">
+        <span class="pill">Live vendor savings</span>
+        <button class="ghost" type="button" id="refreshOrders">Refresh orders</button>
+      </div>
     </header>
 
     <main>
       <section class="hero">
-        <div style="position: relative; z-index: 2">
-          <h1>Find repair parts instantly with Google + AI</h1>
+        <div>
+          <h1>Build the best-value parts order without sacrificing quality.</h1>
           <p>
-            Search Google-backed listings for screens, batteries, tools, and more.
-            We prioritize MobileSentrix, Amazon, and Ebay pricing so you can compare faster.
+            PriceScout compares real-time supplier listings, scores them for reliability, and guides your team
+            through a ready-to-submit purchase order in minutes.
           </p>
-          <div class="search-card">
-            <form id="searchForm" class="form-row">
-              <input
-                type="text"
-                id="searchInput"
-                name="q"
-                placeholder="Example: iPhone 13 screen replacement kit"
-                autocomplete="off"
-                required
-              />
-              <button class="primary" type="submit">Search parts</button>
-            </form>
-            <div class="options">
-              <label class="checkbox">
-                <input type="checkbox" id="inStockOnly" />
-                <span>Show in-stock offers only</span>
-              </label>
-              <div class="chips" aria-label="Suggested searches">
-                <span class="chip" data-query="Galaxy S22 charging port">Galaxy S22 charging port</span>
-                <span class="chip" data-query="MacBook Pro battery A2338">MacBook Pro battery A2338</span>
-                <span class="chip" data-query="Nintendo Switch Joy-Con joystick">Nintendo Switch joystick</span>
-              </div>
-            </div>
-            <div class="status" id="statusText">Type a part name to see Google pricing previews.</div>
+        </div>
+        <div class="hero-grid">
+          <div class="hero-card">
+            <h3>Smart sourcing</h3>
+            <p>Rank offers by trusted vendors, price stability, and delivery speed.</p>
+          </div>
+          <div class="hero-card">
+            <h3>Quality guardrails</h3>
+            <p>Flag risky listings before they hit your bench. Protect your margins.</p>
+          </div>
+          <div class="hero-card">
+            <h3>Instant purchase orders</h3>
+            <p>Turn selected offers into a clean PO ready for your store buyers.</p>
           </div>
         </div>
       </section>
 
-      <section>
-        <div class="grid" id="results"></div>
-        <div id="message"></div>
+      <section class="grid">
+        <div class="panel">
+          <h2>Find supplier offers</h2>
+          <p>Search a part name or model. Choose the offer that balances cost and quality.</p>
+          <form id="searchForm" class="search-bar">
+            <input
+              type="text"
+              id="searchInput"
+              name="q"
+              placeholder="Example: iPhone 14 Pro Max OLED screen"
+              autocomplete="off"
+              required
+            />
+            <button class="primary" type="submit">Search offers</button>
+          </form>
+          <div class="status" id="searchStatus">Search results will appear below.</div>
+          <div class="offer-grid" id="results"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Order builder</h2>
+          <p>Add selected offers, adjust quantity, and submit to generate a store-ready PO.</p>
+          <div class="cart-list" id="cartItems">
+            <div class="empty-state">No items yet. Add from the offers list.</div>
+          </div>
+          <div class="summary">
+            <div>Estimated savings tier: <span id="savingsTier" class="tag brand">Balanced</span></div>
+            <div>Quality coverage: <span id="qualityCoverage" class="tag good">92%+</span></div>
+            <strong>Total estimate: <span id="cartTotal">$0.00</span></strong>
+          </div>
+          <form id="orderForm">
+            <input type="text" id="storeName" placeholder="Store name" required />
+            <input type="text" id="requester" placeholder="Requested by" required />
+            <div class="search-bar">
+              <input type="date" id="neededBy" />
+              <select id="priority">
+                <option value="standard">Standard</option>
+                <option value="expedite">Expedite</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+            <textarea id="orderNotes" placeholder="Notes for purchasing or vendor preferences..."></textarea>
+            <button class="primary" type="submit">Submit purchase order</button>
+          </form>
+          <div id="orderMessage" class="status"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Recent purchase orders</h2>
+        <p>Track recently submitted orders for your stores.</p>
+        <div class="orders" id="ordersList"></div>
       </section>
     </main>
 
+    <footer>
+      Designed for high-volume repair teams. PriceScout keeps vendor data fresh and prioritizes the
+      lowest viable cost while protecting quality thresholds.
+    </footer>
+
     <script>
-      const form = document.getElementById('searchForm');
-      const input = document.getElementById('searchInput');
-      const inStockToggle = document.getElementById('inStockOnly');
+      const searchForm = document.getElementById('searchForm');
+      const searchInput = document.getElementById('searchInput');
       const resultsEl = document.getElementById('results');
-      const messageEl = document.getElementById('message');
-      const statusText = document.getElementById('statusText');
+      const searchStatus = document.getElementById('searchStatus');
+      const cartItemsEl = document.getElementById('cartItems');
+      const cartTotalEl = document.getElementById('cartTotal');
+      const savingsTierEl = document.getElementById('savingsTier');
+      const qualityCoverageEl = document.getElementById('qualityCoverage');
+      const orderForm = document.getElementById('orderForm');
+      const orderMessage = document.getElementById('orderMessage');
+      const ordersList = document.getElementById('ordersList');
+      const refreshOrders = document.getElementById('refreshOrders');
 
-      const formatPrice = (item) => {
-        if (typeof item.price === 'number') return `$${item.price.toFixed(2)}`;
-        if (typeof item.price_value === 'number') return `$${item.price_value.toFixed(2)}`;
-        if (typeof item.price === 'string' && item.price.trim()) return item.price;
-        return 'See offer';
+      const cart = [];
+
+      const formatPrice = (value) => {
+        if (typeof value === 'number' && !Number.isNaN(value)) return `$${value.toFixed(2)}`;
+        if (typeof value === 'string') return value;
+        return '$0.00';
       };
 
-      const badgeForStock = (inStock) =>
-        `<span class="tag ${inStock ? 'success' : 'warn'}">${inStock ? 'In stock' : 'Check availability'}</span>`;
-
-      const badgeForResult = (item) => {
-        if (item.stock_label) {
-          return `<span class="tag neutral">${item.stock_label}</span>`;
-        }
-        return badgeForStock(!!item.in_stock);
+      const estimateQuality = (item) => {
+        const source = (item.source || '').toLowerCase();
+        if (source.includes('mobilesentrix') || source.includes('ifixit')) return 0.97;
+        if (source.includes('amazon')) return 0.9;
+        if (source.includes('ebay')) return 0.85;
+        return 0.88;
       };
 
-      const renderResult = (item) => {
-        const price = formatPrice(item);
-        const best = item.best_price ? '<span class="badge">Best price</span>' : '';
-        const safeImage = item.image || 'https://placehold.co/600x400?text=Repair+Part';
-        return `
-          <article class="card">
-            <img class="thumb" src="${safeImage}" alt="${item.title || 'Product image'}" loading="lazy" />
-            <div class="price-line">${price} ${best}</div>
-            <div class="title">${item.title || 'Untitled part'}</div>
-            <div class="meta">
-              <span class="vendor">${item.source || 'Unknown vendor'}</span>
-              <a href="${item.link || '#'}" target="_blank" rel="noreferrer">View offer →</a>
-            </div>
-            ${badgeForResult(item)}
-          </article>
-        `;
+      const estimateSavingsTier = (total) => {
+        if (total < 150) return 'Starter';
+        if (total < 500) return 'Balanced';
+        return 'High-volume';
       };
 
-      const setMessage = (html) => {
-        messageEl.innerHTML = html;
-      };
-
-      const setStatus = (text) => {
-        statusText.textContent = text;
-      };
-
-      const renderResults = (items) => {
-        resultsEl.innerHTML = '';
+      const renderOffers = (items) => {
         if (!items.length) {
-          setMessage('<div class="empty">No matches found yet. Try a different model name or part number.</div>');
+          resultsEl.innerHTML = '<div class="empty-state">No offers found. Try another query.</div>';
           return;
         }
-        setMessage('');
-        resultsEl.innerHTML = items.map(renderResult).join('');
+        resultsEl.innerHTML = items
+          .map((item) => {
+            const price = item.price_value || item.price || 'See listing';
+            const qualityScore = Math.round(estimateQuality(item) * 100);
+            return `
+              <article class="result-card">
+                <h4>${item.title || 'Unnamed part'}</h4>
+                <div class="result-meta">
+                  <span>${item.source || 'Unknown vendor'}</span>
+                  <span>${formatPrice(Number(price) || item.price)}</span>
+                </div>
+                <div class="result-meta">
+                  <span class="tag brand">Quality ${qualityScore}%</span>
+                  <span class="tag ${qualityScore > 90 ? 'good' : 'warn'}">${qualityScore > 90 ? 'Preferred' : 'Review'}</span>
+                </div>
+                <button class="ghost" type="button" data-add="${encodeURIComponent(JSON.stringify(item))}">
+                  Add to order
+                </button>
+              </article>
+            `;
+          })
+          .join('');
+
+        resultsEl.querySelectorAll('[data-add]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const item = JSON.parse(decodeURIComponent(button.dataset.add));
+            addToCart(item);
+          });
+        });
       };
 
-      const searchParts = async (query) => {
-        if (!query.trim()) return;
-        setStatus('Searching Google listings...');
-        setMessage('');
-        resultsEl.innerHTML = '';
+      const renderCart = () => {
+        if (!cart.length) {
+          cartItemsEl.innerHTML = '<div class="empty-state">No items yet. Add from the offers list.</div>';
+          cartTotalEl.textContent = '$0.00';
+          savingsTierEl.textContent = 'Balanced';
+          qualityCoverageEl.textContent = '92%+';
+          return;
+        }
 
+        const total = cart.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+        const qualityAvg = cart.reduce((sum, item) => sum + item.quality_score, 0) / cart.length;
+
+        cartItemsEl.innerHTML = cart
+          .map((item, index) => {
+            return `
+              <div class="cart-item">
+                <div class="cart-item-header">
+                  <span>${item.part_name}</span>
+                  <span>${formatPrice(item.unit_price * item.quantity)}</span>
+                </div>
+                <small>${item.vendor} • Quality ${Math.round(item.quality_score * 100)}%</small>
+                <div class="result-meta">
+                  <input type="number" min="1" value="${item.quantity}" data-qty="${index}" />
+                  <button class="ghost" type="button" data-remove="${index}">Remove</button>
+                </div>
+              </div>
+            `;
+          })
+          .join('');
+
+        cartItemsEl.querySelectorAll('[data-qty]').forEach((input) => {
+          input.addEventListener('change', () => {
+            const idx = Number(input.dataset.qty);
+            cart[idx].quantity = Math.max(1, Number(input.value));
+            renderCart();
+          });
+        });
+
+        cartItemsEl.querySelectorAll('[data-remove]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const idx = Number(button.dataset.remove);
+            cart.splice(idx, 1);
+            renderCart();
+          });
+        });
+
+        cartTotalEl.textContent = formatPrice(total);
+        savingsTierEl.textContent = estimateSavingsTier(total);
+        qualityCoverageEl.textContent = `${Math.round(qualityAvg * 100)}%`;
+      };
+
+      const addToCart = (item) => {
+        const unitPrice = Number(item.price_value || item.price || 0);
+        cart.push({
+          part_name: item.title || 'Part',
+          vendor: item.source || 'Vendor',
+          quantity: 1,
+          unit_price: unitPrice,
+          quality_score: estimateQuality(item),
+          link: item.link || '',
+        });
+        renderCart();
+      };
+
+      const fetchOffers = async (query) => {
+        searchStatus.textContent = 'Searching live supplier listings...';
+        resultsEl.innerHTML = '';
         try {
-          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&inStock=${inStockToggle.checked}`);
-          if (!res.ok) throw new Error('Request failed');
-          const data = await res.json();
-          if (!Array.isArray(data)) throw new Error('Unexpected response format');
-          renderResults(data);
-          setStatus(`Showing ${data.length} option${data.length === 1 ? '' : 's'} sorted by best pricing.`);
-        } catch (err) {
-          console.error(err);
-          setStatus('');
-          setMessage('<div class="error">We could not load results right now. Please try again.</div>');
+          const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+          if (!response.ok) throw new Error('Search failed');
+          const data = await response.json();
+          renderOffers(data);
+          searchStatus.textContent = `Showing ${data.length} offers optimized for savings.`;
+        } catch (error) {
+          console.error(error);
+          resultsEl.innerHTML = '<div class="empty-state">Unable to load offers right now.</div>';
+          searchStatus.textContent = 'Search failed. Try again shortly.';
         }
       };
 
-      form.addEventListener('submit', (event) => {
+      searchForm.addEventListener('submit', (event) => {
         event.preventDefault();
-        searchParts(input.value);
+        fetchOffers(searchInput.value);
       });
 
-      document.querySelectorAll('.chip').forEach((chip) => {
-        chip.addEventListener('click', () => {
-          input.value = chip.dataset.query;
-          searchParts(chip.dataset.query);
-        });
+      orderForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!cart.length) {
+          orderMessage.textContent = 'Add at least one item before submitting.';
+          return;
+        }
+        orderMessage.textContent = 'Submitting order...';
+        try {
+          const payload = {
+            store_name: document.getElementById('storeName').value,
+            requester: document.getElementById('requester').value,
+            needed_by: document.getElementById('neededBy').value,
+            priority: document.getElementById('priority').value,
+            notes: document.getElementById('orderNotes').value,
+            items: cart,
+          };
+          const response = await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Order failed');
+          orderMessage.textContent = `Order ${data.id} submitted. Total ${formatPrice(data.total_estimated)}.`;
+          cart.splice(0, cart.length);
+          renderCart();
+          orderForm.reset();
+          loadOrders();
+        } catch (error) {
+          orderMessage.textContent = error.message;
+        }
       });
+
+      const loadOrders = async () => {
+        ordersList.innerHTML = '<div class="empty-state">Loading orders...</div>';
+        try {
+          const response = await fetch('/api/orders');
+          const data = await response.json();
+          if (!Array.isArray(data) || !data.length) {
+            ordersList.innerHTML = '<div class="empty-state">No orders yet.</div>';
+            return;
+          }
+          ordersList.innerHTML = data
+            .map(
+              (order) => `
+                <div class="order-card">
+                  <strong>${order.id}</strong>
+                  <div class="result-meta">
+                    <span>${order.store_name} • ${order.requester}</span>
+                    <span>${formatPrice(order.total_estimated)}</span>
+                  </div>
+                  <small>Status: ${order.status} • Needed by: ${order.needed_by || 'TBD'}</small>
+                </div>
+              `
+            )
+            .join('');
+        } catch (error) {
+          ordersList.innerHTML = '<div class="empty-state">Unable to load orders right now.</div>';
+        }
+      };
+
+      refreshOrders.addEventListener('click', loadOrders);
+      loadOrders();
+      renderCart();
     </script>
   </body>
 </html>
