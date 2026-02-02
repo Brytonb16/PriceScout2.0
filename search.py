@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 Scraper = Callable[[str], Iterable[Dict[str, object]]]
 
-PRIORITY_VENDORS = ("mobilesentrix", "amazon", "ebay")
+PRIORITY_VENDORS = ("mobilesentrix", "fixez", "amazon", "ebay")
 
 
 SCRAPER_SOURCES: List[tuple[str, Scraper]] = [

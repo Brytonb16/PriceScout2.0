@@ -3,6 +3,7 @@ import logging
 import os
 from typing import Dict, Iterable, List
 
+import openai
 from openai import OpenAI
 
 from scrapers.utils import parse_price
@@ -14,16 +15,16 @@ REQUEST_TIMEOUT_SECONDS = 15
 logger = logging.getLogger(__name__)
 
 REWRITE_TEMPLATE = (
-    "Rewrite the shopper query so MobileSentrix, Amazon, and Ebay listings are easy to find. "
+    "Rewrite the shopper query so MobileSentrix, Amazon, Ebay, and Fixez listings are easy to find. "
     "Return JSON with keys 'primary' (concise search string) and 'boosted' "
-    "(array of 2-4 vendor-augmented queries that explicitly mention MobileSentrix, "
-    "Amazon, and Ebay). Keep the text short and focused on product terms."
+    "(array of 3-5 vendor-augmented queries that explicitly mention MobileSentrix, "
+    "Amazon, Ebay, and Fixez). Keep the text short and focused on product terms."
 )
 
 SUMMARY_TEMPLATE = (
     "You rank repair part listings. Given the shopper query and a JSON array of "
     "offers, return the 10 lowest priced items. Always include at least one "
-    "entry for MobileSentrix, Amazon, and Ebay when available in the input. "
+    "entry for MobileSentrix, Amazon, Ebay, and Fixez when available in the input. "
     "Output JSON only with the original objects in price order."
 )
 
@@ -32,8 +33,21 @@ def _call_chat(prompt: str, user_payload: str) -> str | None:
     """Best-effort call to the configured chat model."""
 
     if not OPENAI_API_KEY:
-        logger.warning("OpenAI client not configured; skipping request")
-        return None
+        try:
+            response = openai.ChatCompletion.create(
+                model=MODEL,
+                messages=[
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": user_payload},
+                ],
+                timeout=REQUEST_TIMEOUT_SECONDS,
+            )
+            if isinstance(response, dict):
+                return response["choices"][0]["message"]["content"]
+            return response.choices[0].message["content"]
+        except Exception:
+            logger.warning("OpenAI client not configured; skipping request")
+            return None
 
     try:
         client = OpenAI(api_key=OPENAI_API_KEY)
@@ -66,7 +80,13 @@ def rewrite_query_with_vendors(query: str) -> Dict[str, object]:
         except Exception:
             pass
 
-    return {"primary": query, "boosted": []}
+    boosted = [
+        f"{query} MobileSentrix",
+        f"{query} Amazon",
+        f"{query} Ebay",
+        f"{query} Fixez",
+    ]
+    return {"primary": query, "boosted": boosted}
 
 
 def _normalize_price_value(item: Dict[str, object]) -> Dict[str, object]:
@@ -84,7 +104,7 @@ def _normalize_price_value(item: Dict[str, object]) -> Dict[str, object]:
 
 def _fallback_top_offers(results: Iterable[Dict[str, object]]) -> List[Dict[str, object]]:
     normalized = [_normalize_price_value(item) for item in results]
-    required = ("mobilesentrix", "amazon", "ebay")
+    required = ("mobilesentrix", "amazon", "ebay", "fixez")
 
     def matches_vendor(item, vendor):
         return vendor in str(item.get("source", "")).lower()
