@@ -15,7 +15,8 @@ app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
 CORS(app)
 
-ORDER_DB_PATH = os.environ.get("ORDER_DB_PATH", os.path.join(app.root_path, "orders.db"))
+DEFAULT_DB_PATH = os.path.join("/tmp", "orders.db")
+ORDER_DB_PATH = os.environ.get("ORDER_DB_PATH", DEFAULT_DB_PATH)
 
 
 def _get_db() -> sqlite3.Connection:
