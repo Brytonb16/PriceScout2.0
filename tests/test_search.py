@@ -10,7 +10,7 @@ def restore_scrapers(monkeypatch):
     monkeypatch.setattr(search, "SCRAPER_SOURCES", original_sources, raising=False)
 
 
-def test_search_products_prefers_openai(monkeypatch):
+def test_search_products_uses_scrapers_and_filters_with_match_threshold(monkeypatch):
     monkeypatch.setattr(
         search, "rewrite_query_with_vendors", lambda q: {"primary": q, "boosted": []}
     )
@@ -19,11 +19,14 @@ def test_search_products_prefers_openai(monkeypatch):
 
     def fake_scraper_one(_query):
         sentinel.append("scraper-one")
-        return [{"title": "Scraper 1"}]
+        return [
+            {"title": "iphone battery replacement", "price": 12, "source": "Store A", "link": "https://a/1"},
+            {"title": "unrelated laptop bag", "price": 8, "source": "Store B", "link": "https://b/1"},
+        ]
 
     def fake_scraper_two(_query):
         sentinel.append("scraper-two")
-        return [{"title": "Scraper 2"}]
+        return [{"title": "iphone battery replacement kit", "price": 15, "source": "Store C", "link": "https://c/1"}]
 
     monkeypatch.setattr(
         search,
@@ -35,12 +38,16 @@ def test_search_products_prefers_openai(monkeypatch):
         search, "summarize_offers_with_openai", lambda _q, offers: offers
     )
 
-    results = search.search_products("battery")
-    assert results == [{"title": "Scraper 1"}, {"title": "Scraper 2"}]
+    results = search.search_products("iphone battery replacement")
+    assert [item["title"] for item in results] == [
+        "iphone battery replacement",
+        "iphone battery replacement kit",
+    ]
     assert sentinel == ["scraper-one", "scraper-two"]
+    assert all(item["match_score"] >= 0.8 for item in results)
 
 
-def test_search_products_falls_back_to_scrapers(monkeypatch):
+def test_search_products_returns_empty_for_unsupported_category(monkeypatch):
     monkeypatch.setattr(
         search, "rewrite_query_with_vendors", lambda q: {"primary": q, "boosted": []}
     )
@@ -49,38 +56,30 @@ def test_search_products_falls_back_to_scrapers(monkeypatch):
     )
 
     def fake_scraper(_query):
-        return [{"title": "Scraper"}]
+        return [{"title": "gaming mouse", "price": 10, "source": "Store", "link": "https://x/1"}]
 
     monkeypatch.setattr(search, "SCRAPER_SOURCES", [("Fake", fake_scraper)])
 
-    results = search.search_products("screen")
-    assert results == [{"title": "Scraper"}]
+    assert search.search_products("gaming mouse") == []
 
 
 def test_search_products_returns_empty_for_blank_query():
     assert search.search_products("   ") == []
 
 
-def test_search_products_prioritizes_required_vendors(monkeypatch):
+def test_search_products_sorts_lowest_price_first(monkeypatch):
     monkeypatch.setattr(
         search, "rewrite_query_with_vendors", lambda q: {"primary": q, "boosted": []}
     )
 
     def fake_scraper(_query):
         return [
-            {"title": "Generic", "source": "Other", "price": 20},
-            {"title": "MSX", "source": "MobileSentrix", "price": 25},
-            {"title": "Amazon Deal", "source": "Amazon", "price": 30},
-            {"title": "eBay", "source": "eBay", "price": 40},
-            {"title": "Fixez Part", "source": "Fixez", "price": 35},
+            {"title": "screen repair kit", "source": "Fixez", "price": 40, "link": "https://a/1"},
+            {"title": "screen repair kit premium", "source": "Amazon", "price": 20, "link": "https://a/2"},
         ]
 
     monkeypatch.setattr(search, "SCRAPER_SOURCES", [("Fake", fake_scraper)])
-    results = search.search_products("screen")
+    monkeypatch.setattr(search, "summarize_offers_with_openai", lambda _q, offers: offers)
 
-    sources = [item.get("source") for item in results[:4]]
-    assert "MobileSentrix" in sources
-    assert "Fixez" in sources
-    assert "Amazon" in sources
-    assert any("ebay" in str(src).lower() for src in sources)
-
+    results = search.search_products("screen repair kit")
+    assert [item["price"] for item in results] == [20, 40]

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
+from difflib import SequenceMatcher
 from typing import Callable, Dict, Iterable, List
 
 from openai_search import rewrite_query_with_vendors, summarize_offers_with_openai
@@ -14,6 +16,38 @@ logger = logging.getLogger(__name__)
 Scraper = Callable[[str], Iterable[Dict[str, object]]]
 
 PRIORITY_VENDORS = ("mobilesentrix", "fixez", "amazon", "ebay")
+CLEANING_KEYWORDS = {
+    "clean",
+    "cleaner",
+    "cleaning",
+    "wipe",
+    "wipes",
+    "alcohol",
+    "solvent",
+    "degreaser",
+    "brush",
+    "tool",
+    "kit",
+    "adhesive",
+    "tape",
+    "microfiber",
+}
+REPAIR_KEYWORDS = {
+    "repair",
+    "replacement",
+    "part",
+    "parts",
+    "screen",
+    "battery",
+    "charging",
+    "connector",
+    "digitizer",
+    "display",
+    "assembly",
+    "flex",
+    "camera",
+}
+MIN_WORDING_MATCH = 0.80
 
 
 SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
@@ -100,6 +134,64 @@ def _sort_results_by_priority(results: List[Dict[str, object]]) -> List[Dict[str
     return sorted(results, key=lambda item: (*priority_index(item), _price_sort_key(item)))
 
 
+def _normalize_text(value: str) -> str:
+    return re.sub(r"[^a-z0-9\s]+", " ", value.lower()).strip()
+
+
+def _wording_match_score(query: str, result: Dict[str, object]) -> float:
+    normalized_query = _normalize_text(query)
+    normalized_title = _normalize_text(str(result.get("title", "")))
+
+    if not normalized_query or not normalized_title:
+        return 0.0
+
+    query_tokens = {token for token in normalized_query.split() if token}
+    title_tokens = {token for token in normalized_title.split() if token}
+
+    token_coverage = (
+        len(query_tokens & title_tokens) / len(query_tokens)
+        if query_tokens
+        else 0.0
+    )
+    sequence_ratio = SequenceMatcher(None, normalized_query, normalized_title).ratio()
+    return max(token_coverage, sequence_ratio)
+
+
+def _is_supported_category(query: str) -> bool:
+    normalized_query = _normalize_text(query)
+    query_tokens = set(normalized_query.split())
+    category_tokens = CLEANING_KEYWORDS | REPAIR_KEYWORDS
+    return bool(query_tokens & category_tokens)
+
+
+def _filter_results_for_category_and_match(
+    query: str, results: List[Dict[str, object]]
+) -> List[Dict[str, object]]:
+    query_tokens = set(_normalize_text(query).split())
+    category_tokens = CLEANING_KEYWORDS | REPAIR_KEYWORDS
+    filtered: List[Dict[str, object]] = []
+
+    for item in results:
+        title = str(item.get("title", ""))
+        combined_text = set(_normalize_text(title).split())
+        if not (combined_text & category_tokens) and query_tokens:
+            continue
+
+        score = _wording_match_score(query, item)
+        if score < MIN_WORDING_MATCH:
+            continue
+
+        enriched = dict(item)
+        enriched["match_score"] = round(score, 3)
+        filtered.append(enriched)
+
+    return filtered
+
+
+def _sort_results_by_price(results: List[Dict[str, object]]) -> List[Dict[str, object]]:
+    return sorted(results, key=_price_sort_key)
+
+
 def search_products(query: str) -> List[Dict[str, object]]:
     """Return search results for *query*.
 
@@ -111,6 +203,9 @@ def search_products(query: str) -> List[Dict[str, object]]:
     if not query.strip():
         return []
 
+    if not _is_supported_category(query):
+        return []
+
     rewritten = rewrite_query_with_vendors(query)
     queries = [rewritten.get("primary", query)] + list(rewritten.get("boosted", []))
 
@@ -119,5 +214,7 @@ def search_products(query: str) -> List[Dict[str, object]]:
         results.extend(_run_scrapers(variant))
 
     deduped = _deduplicate_results(results)
-    sorted_results = _sort_results_by_priority(deduped)
-    return summarize_offers_with_openai(query, sorted_results)
+    prioritized = _sort_results_by_priority(deduped)
+    summarized = summarize_offers_with_openai(query, prioritized)
+    filtered = _filter_results_for_category_and_match(query, summarized)
+    return _sort_results_by_price(filtered)
