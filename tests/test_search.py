@@ -107,3 +107,29 @@ def test_search_products_falls_back_to_openai_when_scrapers_empty(monkeypatch):
     results = search.search_products("iphone battery replacement")
     assert len(results) == 1
     assert results[0]["source"] == "OpenAI"
+
+
+def test_search_products_handles_dict_payload_from_openai_fallback(monkeypatch):
+    monkeypatch.setattr(
+        search, "rewrite_query_with_vendors", lambda q: {"primary": q, "boosted": []}
+    )
+    monkeypatch.setattr(search, "SCRAPER_SOURCES", [("Empty", lambda _q: [])])
+    monkeypatch.setattr(
+        search,
+        "search_openai",
+        lambda _q: {
+            "offers": [
+                {
+                    "title": "iphone battery replacement",
+                    "price": 19,
+                    "source": "OpenAI",
+                    "link": "https://example.com/offer",
+                }
+            ]
+        },
+    )
+    monkeypatch.setattr(search, "summarize_offers_with_openai", lambda _q, offers: offers)
+
+    results = search.search_products("iphone battery replacement")
+    assert len(results) == 1
+    assert results[0]["source"] == "OpenAI"
