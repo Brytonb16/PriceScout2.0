@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Google Review Command Center</title>
+    <title>PriceScout Shopping Search</title>
     <style>
       :root {
         --ink: #0f172a;
@@ -17,201 +17,122 @@
         margin: 0;
         font-family: Inter, system-ui, sans-serif;
         color: var(--ink);
-        background: var(--bg);
+        background: linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
       }
-      main { max-width: 1100px; margin: 0 auto; padding: 24px; display: grid; gap: 20px; }
-      .panel { background: var(--card); border-radius: 14px; padding: 18px; border: 1px solid #e2e8f0; }
-      h1,h2 { margin: 0; }
-      .subtitle { color: var(--muted); margin-top: 6px; }
-      .stats { display:grid; grid-template-columns: repeat(auto-fit,minmax(170px,1fr)); gap: 12px; }
-      .stat { background:#eff6ff; padding:12px; border-radius:10px; }
-      .label { font-size: 12px; color: var(--muted); text-transform: uppercase; }
-      .value { font-size: 22px; font-weight: 700; }
-      table { width:100%; border-collapse: collapse; }
-      th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: top; }
-      .controls { display:flex; gap:10px; flex-wrap: wrap; margin-top: 12px; }
-      select, textarea, input, button {
+      main { max-width: 1120px; margin: 0 auto; padding: 28px; display: grid; gap: 18px; }
+      .panel { background: var(--card); border-radius: 14px; padding: 20px; border: 1px solid #e2e8f0; }
+      h1, h2 { margin: 0; }
+      .subtitle { color: var(--muted); margin-top: 8px; }
+      .controls { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+      input, button {
         font: inherit;
-        padding: 10px;
-        border-radius: 8px;
+        padding: 11px 12px;
+        border-radius: 10px;
         border: 1px solid #cbd5e1;
       }
-      button { background: var(--brand); color: #fff; border: none; cursor: pointer; }
-      button.secondary { background: #334155; }
-      textarea { width:100%; min-height: 90px; }
-      .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; }
-      .pending { background:#fef3c7; color:#92400e; }
-      .responded { background:#dcfce7; color:#166534; }
+      #searchInput { flex: 1; min-width: 280px; }
+      button { background: var(--brand); color: white; border: none; cursor: pointer; }
+      .hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+      th, td {
+        text-align: left;
+        padding: 10px 8px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 14px;
+        vertical-align: top;
+      }
       .mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--muted); }
+      .price { font-weight: 700; color: #0f766e; }
+      .score { font-weight: 600; color: #1d4ed8; }
+      a { color: #1d4ed8; text-decoration: none; }
+      a:hover { text-decoration: underline; }
     </style>
   </head>
   <body>
     <main>
       <section class="panel">
-        <h1>Google Review Management</h1>
-        <p class="subtitle">BirdEye-style operations for multi-storefront monitoring and auto-replies.</p>
-        <div class="stats" id="stats"></div>
-      </section>
-
-      <section class="panel">
-        <h2>Storefronts</h2>
+        <h1>PriceScout Shopping Search</h1>
+        <p class="subtitle">Search cleaning supplies, tools, and repair parts. Results are ranked from lowest to highest price and only include products with at least 80% wording match.</p>
         <div class="controls">
-          <select id="storefrontFilter"></select>
-          <select id="statusFilter">
-            <option value="all">All statuses</option>
-            <option value="pending">Pending</option>
-            <option value="responded">Responded</option>
-          </select>
-          <button id="refreshReviews">Refresh reviews</button>
+          <input id="searchInput" placeholder="Try: iphone 12 charging port flex cable" />
+          <button id="searchButton">Search</button>
         </div>
-        <p class="mono">Tip: Create auto-response templates with placeholders like {{reviewer_name}}, {{storefront_name}}, {{rating}}, {{comment}}</p>
+        <p class="hint">Supported intent: cleaning supplies/tools and repair parts only.</p>
       </section>
 
       <section class="panel">
-        <h2>Auto-response rules</h2>
-        <div class="controls">
-          <input id="minRating" type="number" value="4" min="1" max="5" />
-          <input id="maxRating" type="number" value="5" min="1" max="5" />
-          <button id="saveRule">Save rule for selected storefront</button>
-        </div>
-        <textarea id="ruleTemplate">Thanks {{reviewer_name}} for your {{rating}}-star review at {{storefront_name}}. We appreciate your support!</textarea>
-      </section>
-
-      <section class="panel">
-        <h2>Recent reviews</h2>
+        <h2>Results</h2>
+        <p id="resultMeta" class="mono">Enter a query to begin.</p>
         <table>
           <thead>
             <tr>
-              <th>Storefront</th>
-              <th>Rating</th>
-              <th>Review</th>
-              <th>Status</th>
-              <th>Response</th>
-              <th>Action</th>
+              <th>Item</th>
+              <th>Source</th>
+              <th>Price</th>
+              <th>Match</th>
+              <th>Link</th>
             </tr>
           </thead>
-          <tbody id="reviewRows"></tbody>
+          <tbody id="resultRows"></tbody>
         </table>
       </section>
     </main>
 
     <script>
-      const state = { storefronts: [], reviews: [] };
-
-      async function jsonFetch(url, options) {
-        const res = await fetch(url, options);
-        if (!res.ok) throw new Error(await res.text());
-        return await res.json();
+      function formatPrice(value) {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) return `$${parsed.toFixed(2)}`;
+        return value || 'N/A';
       }
 
-      function selectedStorefrontId() {
-        const value = document.getElementById('storefrontFilter').value;
-        return value === 'all' ? null : Number(value);
-      }
-
-      function renderStats(data) {
-        const cards = [
-          ['Total Reviews', data.total_reviews ?? 0],
-          ['Pending', data.pending_reviews ?? 0],
-          ['Responded', data.responded_reviews ?? 0],
-          ['Avg Rating', data.average_rating ?? '-']
-        ];
-        document.getElementById('stats').innerHTML = cards
-          .map(([label, value]) => `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div></div>`)
-          .join('');
-      }
-
-      function renderStorefrontFilter() {
-        const select = document.getElementById('storefrontFilter');
-        const options = ['<option value="all">All storefronts</option>']
-          .concat(state.storefronts.map(s => `<option value="${s.id}">${s.name} (${s.city || 'N/A'})</option>`));
-        select.innerHTML = options.join('');
-      }
-
-      function reviewRow(review) {
-        const response = review.response_text ? review.response_text : '<span class="mono">No response yet</span>';
+      function resultRow(item) {
+        const link = item.link ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer">View item</a>` : '<span class="mono">N/A</span>';
         return `
           <tr>
-            <td>${review.storefront_name}</td>
-            <td>${'⭐'.repeat(review.rating)} (${review.rating})</td>
-            <td><strong>${review.reviewer_name}</strong><br/>${review.comment}</td>
-            <td><span class="badge ${review.status}">${review.status}</span></td>
-            <td>${response}</td>
-            <td>
-              <button class="secondary" onclick="respond(${review.id})" ${review.status === 'responded' ? 'disabled' : ''}>Auto-respond</button>
-            </td>
+            <td><strong>${item.title || 'Untitled item'}</strong></td>
+            <td>${item.source || 'Unknown'}</td>
+            <td class="price">${formatPrice(item.price_value ?? item.price)}</td>
+            <td class="score">${Math.round((item.match_score || 0) * 100)}%</td>
+            <td>${link}</td>
           </tr>
         `;
       }
 
-      function renderReviews() {
-        document.getElementById('reviewRows').innerHTML = state.reviews.map(reviewRow).join('');
-      }
-
-      async function loadOverview() {
-        renderStats(await jsonFetch('/api/overview'));
-      }
-
-      async function loadStorefronts() {
-        state.storefronts = await jsonFetch('/api/storefronts');
-        renderStorefrontFilter();
-      }
-
-      async function loadReviews() {
-        const storefrontId = selectedStorefrontId();
-        const status = document.getElementById('statusFilter').value;
-        const params = new URLSearchParams();
-        if (storefrontId) params.set('storefront_id', storefrontId);
-        if (status !== 'all') params.set('status', status);
-        state.reviews = await jsonFetch(`/api/reviews?${params.toString()}`);
-        renderReviews();
-      }
-
-      async function respond(reviewId) {
-        try {
-          await jsonFetch(`/api/reviews/${reviewId}/respond`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
-          });
-          await Promise.all([loadOverview(), loadReviews()]);
-        } catch (err) {
-          alert('Failed to respond: ' + err.message);
-        }
-      }
-
-      async function saveRule() {
-        const storefrontId = selectedStorefrontId();
-        if (!storefrontId) {
-          alert('Please choose a specific storefront before saving a rule.');
+      async function runSearch() {
+        const query = document.getElementById('searchInput').value.trim();
+        if (!query) {
+          alert('Please enter a search query.');
           return;
         }
-        const payload = {
-          storefront_id: storefrontId,
-          min_rating: Number(document.getElementById('minRating').value),
-          max_rating: Number(document.getElementById('maxRating').value),
-          template: document.getElementById('ruleTemplate').value
-        };
+
+        const rows = document.getElementById('resultRows');
+        const meta = document.getElementById('resultMeta');
+        rows.innerHTML = '';
+        meta.textContent = 'Searching…';
 
         try {
-          await jsonFetch('/api/auto-rules', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          alert('Rule saved. New auto-responses will use this template.');
+          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Search failed');
+          }
+
+          rows.innerHTML = data.results.map(resultRow).join('');
+          meta.textContent = `Found ${data.count} item(s) for "${data.query}".`;
+
+          if (!data.results.length) {
+            rows.innerHTML = '<tr><td colspan="5" class="mono">No matching products found. Try adding specific part/tool wording.</td></tr>';
+          }
         } catch (err) {
-          alert('Failed to save rule: ' + err.message);
+          rows.innerHTML = '<tr><td colspan="5" class="mono">Search failed.</td></tr>';
+          meta.textContent = err.message;
         }
       }
 
-      document.getElementById('refreshReviews').addEventListener('click', loadReviews);
-      document.getElementById('statusFilter').addEventListener('change', loadReviews);
-      document.getElementById('storefrontFilter').addEventListener('change', loadReviews);
-      document.getElementById('saveRule').addEventListener('click', saveRule);
-
-      Promise.all([loadOverview(), loadStorefronts()]).then(loadReviews);
-      window.respond = respond;
+      document.getElementById('searchButton').addEventListener('click', runSearch);
+      document.getElementById('searchInput').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') runSearch();
+      });
     </script>
   </body>
 </html>

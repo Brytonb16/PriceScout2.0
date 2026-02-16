@@ -15,15 +15,15 @@ REQUEST_TIMEOUT_SECONDS = 15
 logger = logging.getLogger(__name__)
 
 REWRITE_TEMPLATE = (
-    "Rewrite the shopper query so MobileSentrix, Amazon, Ebay, and Fixez listings are easy to find. "
+    "Rewrite the shopper query for a shopping search focused on cleaning supplies/tools and repair parts so MobileSentrix, Amazon, Ebay, and Fixez listings are easy to find. "
     "Return JSON with keys 'primary' (concise search string) and 'boosted' "
     "(array of 3-5 vendor-augmented queries that explicitly mention MobileSentrix, "
     "Amazon, Ebay, and Fixez). Keep the text short and focused on product terms."
 )
 
 SUMMARY_TEMPLATE = (
-    "You rank repair part listings. Given the shopper query and a JSON array of "
-    "offers, return the 10 lowest priced items. Always include at least one "
+    "You rank shopping listings for cleaning supplies/tools and repair parts. Given the shopper query and a JSON array of "
+    "offers, return the 10 lowest priced items with at least 80% wording match to the shopper query. Always include at least one "
     "entry for MobileSentrix, Amazon, Ebay, and Fixez when available in the input. "
     "Output JSON only with the original objects in price order."
 )
@@ -158,12 +158,12 @@ def search_openai(query: str):
     """Backward-compatible entrypoint returning AI-synthesised offers."""
 
     prompt = (
-        "You help technicians find replacement and repair parts. "
+        "You help shoppers find cleaning supplies/tools and replacement repair parts. "
         "Return a JSON array of 6-10 offers for the search '{query}'. "
         "Each item must include: title, price (as a number), in_stock (boolean), "
         "source (store name), link (product URL), and image (product photo). "
         "Prioritize MobileSentrix, Amazon, and Ebay listings whenever available, "
-        "avoid accessories, and sort items by price from lowest to highest so the "
+        "exclude unrelated accessories, keep only items with at least 80% wording overlap with the query, and sort items by price from lowest to highest so the "
         "best deals appear first."
     ).format(query=query)
 

@@ -57,3 +57,26 @@ def test_rule_and_auto_response_flow(tmp_path):
     response_payload = respond.get_json()
     assert response_payload["status"] == "responded"
     assert response_payload["response_text"]
+
+
+def test_api_search_endpoint_returns_results(tmp_path, monkeypatch):
+    app = load_app_with_temp_db(tmp_path)
+    client = app.test_client()
+
+    monkeypatch.setattr("app.search_products", lambda query: [{"title": query, "price": 5.0, "match_score": 0.9}])
+
+    response = client.get("/api/search?q=screen repair kit")
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["query"] == "screen repair kit"
+    assert payload["count"] == 1
+    assert payload["results"][0]["match_score"] >= 0.8
+
+
+def test_api_search_endpoint_requires_query(tmp_path):
+    app = load_app_with_temp_db(tmp_path)
+    client = app.test_client()
+
+    response = client.get("/api/search")
+    assert response.status_code == 400
+    assert "Missing query" in response.get_json()["error"]

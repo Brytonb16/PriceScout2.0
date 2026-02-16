@@ -7,6 +7,8 @@ from typing import Any, Dict, Optional
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 
+from search import search_products
+
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
 CORS(app)
@@ -111,6 +113,16 @@ _init_db()
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
+@app.route("/api/search", methods=["GET"])
+def api_search_products():
+    query = request.args.get("q", "").strip()
+    if not query:
+        return jsonify({"error": "Missing query parameter 'q'."}), 400
+
+    results = search_products(query)
+    return jsonify({"query": query, "results": results, "count": len(results)})
 
 
 @app.route("/api/storefronts", methods=["GET"])
