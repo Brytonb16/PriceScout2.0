@@ -130,6 +130,18 @@ def _deduplicate_results(results: List[Dict[str, object]]) -> List[Dict[str, obj
     return deduped
 
 
+def _coerce_offer_results(payload: object) -> List[Dict[str, object]]:
+    """Normalize AI payloads into a list of offer dictionaries."""
+
+    if isinstance(payload, dict):
+        payload = payload.get("offers", [])
+
+    if not isinstance(payload, list):
+        return []
+
+    return [item for item in payload if isinstance(item, dict)]
+
+
 def _price_sort_key(item: Dict[str, object]) -> float:
     for key in ("price_value", "price"):
         value = item.get(key)
@@ -228,7 +240,7 @@ def search_products(query: str) -> List[Dict[str, object]]:
 
     if not deduped:
         logger.info("Scrapers returned no results for '%s'; falling back to OpenAI", query)
-        ai_offers = search_openai(query)
+        ai_offers = _coerce_offer_results(search_openai(query))
         deduped = _deduplicate_results(ai_offers)
 
     prioritized = _sort_results_by_priority(deduped)
