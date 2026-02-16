@@ -3,662 +3,215 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PriceScout | Smart Parts Ordering</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <title>Google Review Command Center</title>
     <style>
       :root {
-        color-scheme: light;
         --ink: #0f172a;
-        --muted: #475569;
-        --soft: #94a3b8;
+        --muted: #64748b;
         --brand: #2563eb;
-        --brand-strong: #1d4ed8;
-        --accent: #10b981;
-        --warning: #f97316;
-        --surface: #f8fafc;
+        --bg: #f8fafc;
         --card: #ffffff;
-        --shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
       }
-
-      * {
-        box-sizing: border-box;
-      }
-
+      * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: "Manrope", system-ui, -apple-system, sans-serif;
+        font-family: Inter, system-ui, sans-serif;
         color: var(--ink);
-        background: radial-gradient(circle at 15% 15%, #e0f2fe, transparent 45%),
-          radial-gradient(circle at 85% 15%, #fee2e2, transparent 40%),
-          linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        background: var(--bg);
       }
-
-      header {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 24px 32px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
+      main { max-width: 1100px; margin: 0 auto; padding: 24px; display: grid; gap: 20px; }
+      .panel { background: var(--card); border-radius: 14px; padding: 18px; border: 1px solid #e2e8f0; }
+      h1,h2 { margin: 0; }
+      .subtitle { color: var(--muted); margin-top: 6px; }
+      .stats { display:grid; grid-template-columns: repeat(auto-fit,minmax(170px,1fr)); gap: 12px; }
+      .stat { background:#eff6ff; padding:12px; border-radius:10px; }
+      .label { font-size: 12px; color: var(--muted); text-transform: uppercase; }
+      .value { font-size: 22px; font-weight: 700; }
+      table { width:100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: top; }
+      .controls { display:flex; gap:10px; flex-wrap: wrap; margin-top: 12px; }
+      select, textarea, input, button {
+        font: inherit;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
       }
-
-      .logo {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-weight: 800;
-        font-size: 20px;
-      }
-
-      .logo span {
-        color: var(--brand-strong);
-      }
-
-      .actions {
-        display: flex;
-        gap: 12px;
-      }
-
-      .pill {
-        border-radius: 999px;
-        padding: 8px 14px;
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--brand-strong);
-        background: rgba(37, 99, 235, 0.12);
-      }
-
-      main {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 32px 80px;
-        display: grid;
-        gap: 32px;
-      }
-
-      .hero {
-        background: var(--card);
-        border-radius: 24px;
-        padding: 36px;
-        box-shadow: var(--shadow);
-        display: grid;
-        gap: 28px;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .hero::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 90% 10%, rgba(37, 99, 235, 0.12), transparent 50%);
-        pointer-events: none;
-      }
-
-      .hero h1 {
-        margin: 0;
-        font-size: clamp(32px, 5vw, 44px);
-        line-height: 1.1;
-      }
-
-      .hero p {
-        margin: 8px 0 0;
-        color: var(--muted);
-        max-width: 720px;
-        font-size: 16px;
-      }
-
-      .hero-grid {
-        display: grid;
-        gap: 20px;
-        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      }
-
-      .hero-card {
-        background: rgba(248, 250, 252, 0.9);
-        border-radius: 18px;
-        padding: 18px;
-        border: 1px solid rgba(15, 23, 42, 0.08);
-      }
-
-      .hero-card h3 {
-        margin: 0 0 6px;
-        font-size: 15px;
-      }
-
-      .hero-card p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .grid {
-        display: grid;
-        gap: 24px;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      }
-
-      .panel {
-        background: var(--card);
-        border-radius: 20px;
-        padding: 24px;
-        box-shadow: var(--shadow);
-        display: grid;
-        gap: 16px;
-      }
-
-      .panel h2 {
-        margin: 0;
-        font-size: 20px;
-      }
-
-      .panel p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .search-bar {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-      }
-
-      @media (max-width: 720px) {
-        .search-bar {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      input,
-      select,
-      textarea {
-        font-family: inherit;
-      }
-
-      input[type="text"],
-      input[type="number"],
-      input[type="date"],
-      select,
-      textarea {
-        width: 100%;
-        padding: 12px 14px;
-        border-radius: 12px;
-        border: 1px solid rgba(15, 23, 42, 0.1);
-        font-size: 14px;
-      }
-
-      textarea {
-        min-height: 90px;
-      }
-
-      button {
-        font-family: inherit;
-        cursor: pointer;
-        border: none;
-      }
-
-      .primary {
-        background: linear-gradient(135deg, var(--brand), var(--brand-strong));
-        color: #fff;
-        font-weight: 700;
-        padding: 12px 18px;
-        border-radius: 12px;
-        box-shadow: 0 18px 30px rgba(37, 99, 235, 0.25);
-      }
-
-      .ghost {
-        background: rgba(15, 23, 42, 0.05);
-        color: var(--ink);
-        font-weight: 600;
-        padding: 10px 14px;
-        border-radius: 12px;
-      }
-
-      .result-card {
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        border-radius: 16px;
-        padding: 16px;
-        display: grid;
-        gap: 10px;
-        background: rgba(248, 250, 252, 0.8);
-      }
-
-      .result-card h4 {
-        margin: 0;
-        font-size: 15px;
-      }
-
-      .result-meta {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        font-size: 13px;
-        color: var(--muted);
-      }
-
-      .tag {
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .tag.good {
-        background: rgba(16, 185, 129, 0.12);
-        color: #047857;
-      }
-
-      .tag.warn {
-        background: rgba(249, 115, 22, 0.12);
-        color: #c2410c;
-      }
-
-      .tag.brand {
-        background: rgba(37, 99, 235, 0.12);
-        color: var(--brand-strong);
-      }
-
-      .offer-grid {
-        display: grid;
-        gap: 12px;
-      }
-
-      .cart-list {
-        display: grid;
-        gap: 12px;
-      }
-
-      .cart-item {
-        display: grid;
-        gap: 6px;
-        padding: 12px;
-        border-radius: 12px;
-        background: rgba(15, 23, 42, 0.04);
-      }
-
-      .cart-item-header {
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-        font-weight: 600;
-      }
-
-      .cart-item small {
-        color: var(--muted);
-      }
-
-      .summary {
-        display: grid;
-        gap: 8px;
-        font-size: 14px;
-      }
-
-      .summary strong {
-        font-size: 18px;
-      }
-
-      .empty-state {
-        color: var(--soft);
-        font-size: 14px;
-      }
-
-      .status {
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      .orders {
-        display: grid;
-        gap: 12px;
-      }
-
-      .order-card {
-        border-radius: 14px;
-        padding: 14px;
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        display: grid;
-        gap: 6px;
-      }
-
-      footer {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 32px 40px;
-        color: var(--muted);
-        font-size: 13px;
-      }
+      button { background: var(--brand); color: #fff; border: none; cursor: pointer; }
+      button.secondary { background: #334155; }
+      textarea { width:100%; min-height: 90px; }
+      .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; }
+      .pending { background:#fef3c7; color:#92400e; }
+      .responded { background:#dcfce7; color:#166534; }
+      .mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--muted); }
     </style>
   </head>
   <body>
-    <header>
-      <div class="logo">
-        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2l3 7h7l-5.5 4 2 7-6-4-6 4 2-7L2 9h7l3-7z" />
-        </svg>
-        PriceScout <span>StoreOps</span>
-      </div>
-      <div class="actions">
-        <span class="pill">Live vendor savings</span>
-        <button class="ghost" type="button" id="refreshOrders">Refresh orders</button>
-      </div>
-    </header>
-
     <main>
-      <section class="hero">
-        <div>
-          <h1>Build the best-value parts order without sacrificing quality.</h1>
-          <p>
-            PriceScout compares real-time supplier listings, scores them for reliability, and guides your team
-            through a ready-to-submit purchase order in minutes.
-          </p>
-        </div>
-        <div class="hero-grid">
-          <div class="hero-card">
-            <h3>Smart sourcing</h3>
-            <p>Rank offers by trusted vendors, price stability, and delivery speed.</p>
-          </div>
-          <div class="hero-card">
-            <h3>Quality guardrails</h3>
-            <p>Flag risky listings before they hit your bench. Protect your margins.</p>
-          </div>
-          <div class="hero-card">
-            <h3>Instant purchase orders</h3>
-            <p>Turn selected offers into a clean PO ready for your store buyers.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid">
-        <div class="panel">
-          <h2>Find supplier offers</h2>
-          <p>Search a part name or model. Choose the offer that balances cost and quality.</p>
-          <form id="searchForm" class="search-bar">
-            <input
-              type="text"
-              id="searchInput"
-              name="q"
-              placeholder="Example: iPhone 14 Pro Max OLED screen"
-              autocomplete="off"
-              required
-            />
-            <button class="primary" type="submit">Search offers</button>
-          </form>
-          <div class="status" id="searchStatus">Search results will appear below.</div>
-          <div class="offer-grid" id="results"></div>
-        </div>
-
-        <div class="panel">
-          <h2>Order builder</h2>
-          <p>Add selected offers, adjust quantity, and submit to generate a store-ready PO.</p>
-          <div class="cart-list" id="cartItems">
-            <div class="empty-state">No items yet. Add from the offers list.</div>
-          </div>
-          <div class="summary">
-            <div>Estimated savings tier: <span id="savingsTier" class="tag brand">Balanced</span></div>
-            <div>Quality coverage: <span id="qualityCoverage" class="tag good">92%+</span></div>
-            <strong>Total estimate: <span id="cartTotal">$0.00</span></strong>
-          </div>
-          <form id="orderForm">
-            <input type="text" id="storeName" placeholder="Store name" required />
-            <input type="text" id="requester" placeholder="Requested by" required />
-            <div class="search-bar">
-              <input type="date" id="neededBy" />
-              <select id="priority">
-                <option value="standard">Standard</option>
-                <option value="expedite">Expedite</option>
-                <option value="critical">Critical</option>
-              </select>
-            </div>
-            <textarea id="orderNotes" placeholder="Notes for purchasing or vendor preferences..."></textarea>
-            <button class="primary" type="submit">Submit purchase order</button>
-          </form>
-          <div id="orderMessage" class="status"></div>
-        </div>
+      <section class="panel">
+        <h1>Google Review Management</h1>
+        <p class="subtitle">BirdEye-style operations for multi-storefront monitoring and auto-replies.</p>
+        <div class="stats" id="stats"></div>
       </section>
 
       <section class="panel">
-        <h2>Recent purchase orders</h2>
-        <p>Track recently submitted orders for your stores.</p>
-        <div class="orders" id="ordersList"></div>
+        <h2>Storefronts</h2>
+        <div class="controls">
+          <select id="storefrontFilter"></select>
+          <select id="statusFilter">
+            <option value="all">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="responded">Responded</option>
+          </select>
+          <button id="refreshReviews">Refresh reviews</button>
+        </div>
+        <p class="mono">Tip: Create auto-response templates with placeholders like {{reviewer_name}}, {{storefront_name}}, {{rating}}, {{comment}}</p>
+      </section>
+
+      <section class="panel">
+        <h2>Auto-response rules</h2>
+        <div class="controls">
+          <input id="minRating" type="number" value="4" min="1" max="5" />
+          <input id="maxRating" type="number" value="5" min="1" max="5" />
+          <button id="saveRule">Save rule for selected storefront</button>
+        </div>
+        <textarea id="ruleTemplate">Thanks {{reviewer_name}} for your {{rating}}-star review at {{storefront_name}}. We appreciate your support!</textarea>
+      </section>
+
+      <section class="panel">
+        <h2>Recent reviews</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Storefront</th>
+              <th>Rating</th>
+              <th>Review</th>
+              <th>Status</th>
+              <th>Response</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="reviewRows"></tbody>
+        </table>
       </section>
     </main>
 
-    <footer>
-      Designed for high-volume repair teams. PriceScout keeps vendor data fresh and prioritizes the
-      lowest viable cost while protecting quality thresholds.
-    </footer>
-
     <script>
-      const searchForm = document.getElementById('searchForm');
-      const searchInput = document.getElementById('searchInput');
-      const resultsEl = document.getElementById('results');
-      const searchStatus = document.getElementById('searchStatus');
-      const cartItemsEl = document.getElementById('cartItems');
-      const cartTotalEl = document.getElementById('cartTotal');
-      const savingsTierEl = document.getElementById('savingsTier');
-      const qualityCoverageEl = document.getElementById('qualityCoverage');
-      const orderForm = document.getElementById('orderForm');
-      const orderMessage = document.getElementById('orderMessage');
-      const ordersList = document.getElementById('ordersList');
-      const refreshOrders = document.getElementById('refreshOrders');
+      const state = { storefronts: [], reviews: [] };
 
-      const cart = [];
+      async function jsonFetch(url, options) {
+        const res = await fetch(url, options);
+        if (!res.ok) throw new Error(await res.text());
+        return await res.json();
+      }
 
-      const formatPrice = (value) => {
-        if (typeof value === 'number' && !Number.isNaN(value)) return `$${value.toFixed(2)}`;
-        if (typeof value === 'string') return value;
-        return '$0.00';
-      };
+      function selectedStorefrontId() {
+        const value = document.getElementById('storefrontFilter').value;
+        return value === 'all' ? null : Number(value);
+      }
 
-      const estimateQuality = (item) => {
-        const source = (item.source || '').toLowerCase();
-        if (source.includes('mobilesentrix') || source.includes('ifixit')) return 0.97;
-        if (source.includes('amazon')) return 0.9;
-        if (source.includes('ebay')) return 0.85;
-        return 0.88;
-      };
-
-      const estimateSavingsTier = (total) => {
-        if (total < 150) return 'Starter';
-        if (total < 500) return 'Balanced';
-        return 'High-volume';
-      };
-
-      const renderOffers = (items) => {
-        if (!items.length) {
-          resultsEl.innerHTML = '<div class="empty-state">No offers found. Try another query.</div>';
-          return;
-        }
-        resultsEl.innerHTML = items
-          .map((item) => {
-            const price = item.price_value || item.price || 'See listing';
-            const qualityScore = Math.round(estimateQuality(item) * 100);
-            return `
-              <article class="result-card">
-                <h4>${item.title || 'Unnamed part'}</h4>
-                <div class="result-meta">
-                  <span>${item.source || 'Unknown vendor'}</span>
-                  <span>${formatPrice(Number(price) || item.price)}</span>
-                </div>
-                <div class="result-meta">
-                  <span class="tag brand">Quality ${qualityScore}%</span>
-                  <span class="tag ${qualityScore > 90 ? 'good' : 'warn'}">${qualityScore > 90 ? 'Preferred' : 'Review'}</span>
-                </div>
-                <button class="ghost" type="button" data-add="${encodeURIComponent(JSON.stringify(item))}">
-                  Add to order
-                </button>
-              </article>
-            `;
-          })
+      function renderStats(data) {
+        const cards = [
+          ['Total Reviews', data.total_reviews ?? 0],
+          ['Pending', data.pending_reviews ?? 0],
+          ['Responded', data.responded_reviews ?? 0],
+          ['Avg Rating', data.average_rating ?? '-']
+        ];
+        document.getElementById('stats').innerHTML = cards
+          .map(([label, value]) => `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div></div>`)
           .join('');
+      }
 
-        resultsEl.querySelectorAll('[data-add]').forEach((button) => {
-          button.addEventListener('click', () => {
-            const item = JSON.parse(decodeURIComponent(button.dataset.add));
-            addToCart(item);
-          });
-        });
-      };
+      function renderStorefrontFilter() {
+        const select = document.getElementById('storefrontFilter');
+        const options = ['<option value="all">All storefronts</option>']
+          .concat(state.storefronts.map(s => `<option value="${s.id}">${s.name} (${s.city || 'N/A'})</option>`));
+        select.innerHTML = options.join('');
+      }
 
-      const renderCart = () => {
-        if (!cart.length) {
-          cartItemsEl.innerHTML = '<div class="empty-state">No items yet. Add from the offers list.</div>';
-          cartTotalEl.textContent = '$0.00';
-          savingsTierEl.textContent = 'Balanced';
-          qualityCoverageEl.textContent = '92%+';
-          return;
-        }
+      function reviewRow(review) {
+        const response = review.response_text ? review.response_text : '<span class="mono">No response yet</span>';
+        return `
+          <tr>
+            <td>${review.storefront_name}</td>
+            <td>${'⭐'.repeat(review.rating)} (${review.rating})</td>
+            <td><strong>${review.reviewer_name}</strong><br/>${review.comment}</td>
+            <td><span class="badge ${review.status}">${review.status}</span></td>
+            <td>${response}</td>
+            <td>
+              <button class="secondary" onclick="respond(${review.id})" ${review.status === 'responded' ? 'disabled' : ''}>Auto-respond</button>
+            </td>
+          </tr>
+        `;
+      }
 
-        const total = cart.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
-        const qualityAvg = cart.reduce((sum, item) => sum + item.quality_score, 0) / cart.length;
+      function renderReviews() {
+        document.getElementById('reviewRows').innerHTML = state.reviews.map(reviewRow).join('');
+      }
 
-        cartItemsEl.innerHTML = cart
-          .map((item, index) => {
-            return `
-              <div class="cart-item">
-                <div class="cart-item-header">
-                  <span>${item.part_name}</span>
-                  <span>${formatPrice(item.unit_price * item.quantity)}</span>
-                </div>
-                <small>${item.vendor} • Quality ${Math.round(item.quality_score * 100)}%</small>
-                <div class="result-meta">
-                  <input type="number" min="1" value="${item.quantity}" data-qty="${index}" />
-                  <button class="ghost" type="button" data-remove="${index}">Remove</button>
-                </div>
-              </div>
-            `;
-          })
-          .join('');
+      async function loadOverview() {
+        renderStats(await jsonFetch('/api/overview'));
+      }
 
-        cartItemsEl.querySelectorAll('[data-qty]').forEach((input) => {
-          input.addEventListener('change', () => {
-            const idx = Number(input.dataset.qty);
-            cart[idx].quantity = Math.max(1, Number(input.value));
-            renderCart();
-          });
-        });
+      async function loadStorefronts() {
+        state.storefronts = await jsonFetch('/api/storefronts');
+        renderStorefrontFilter();
+      }
 
-        cartItemsEl.querySelectorAll('[data-remove]').forEach((button) => {
-          button.addEventListener('click', () => {
-            const idx = Number(button.dataset.remove);
-            cart.splice(idx, 1);
-            renderCart();
-          });
-        });
+      async function loadReviews() {
+        const storefrontId = selectedStorefrontId();
+        const status = document.getElementById('statusFilter').value;
+        const params = new URLSearchParams();
+        if (storefrontId) params.set('storefront_id', storefrontId);
+        if (status !== 'all') params.set('status', status);
+        state.reviews = await jsonFetch(`/api/reviews?${params.toString()}`);
+        renderReviews();
+      }
 
-        cartTotalEl.textContent = formatPrice(total);
-        savingsTierEl.textContent = estimateSavingsTier(total);
-        qualityCoverageEl.textContent = `${Math.round(qualityAvg * 100)}%`;
-      };
-
-      const addToCart = (item) => {
-        const unitPrice = Number(item.price_value || item.price || 0);
-        cart.push({
-          part_name: item.title || 'Part',
-          vendor: item.source || 'Vendor',
-          quantity: 1,
-          unit_price: unitPrice,
-          quality_score: estimateQuality(item),
-          link: item.link || '',
-        });
-        renderCart();
-      };
-
-      const fetchOffers = async (query) => {
-        searchStatus.textContent = 'Searching live supplier listings...';
-        resultsEl.innerHTML = '';
+      async function respond(reviewId) {
         try {
-          const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-          if (!response.ok) throw new Error('Search failed');
-          const data = await response.json();
-          renderOffers(data);
-          searchStatus.textContent = `Showing ${data.length} offers optimized for savings.`;
-        } catch (error) {
-          console.error(error);
-          resultsEl.innerHTML = '<div class="empty-state">Unable to load offers right now.</div>';
-          searchStatus.textContent = 'Search failed. Try again shortly.';
-        }
-      };
-
-      searchForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        fetchOffers(searchInput.value);
-      });
-
-      orderForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        if (!cart.length) {
-          orderMessage.textContent = 'Add at least one item before submitting.';
-          return;
-        }
-        orderMessage.textContent = 'Submitting order...';
-        try {
-          const payload = {
-            store_name: document.getElementById('storeName').value,
-            requester: document.getElementById('requester').value,
-            needed_by: document.getElementById('neededBy').value,
-            priority: document.getElementById('priority').value,
-            notes: document.getElementById('orderNotes').value,
-            items: cart,
-          };
-          const response = await fetch('/api/orders', {
+          await jsonFetch(`/api/reviews/${reviewId}/respond`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({})
           });
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.error || 'Order failed');
-          orderMessage.textContent = `Order ${data.id} submitted. Total ${formatPrice(data.total_estimated)}.`;
-          cart.splice(0, cart.length);
-          renderCart();
-          orderForm.reset();
-          loadOrders();
-        } catch (error) {
-          orderMessage.textContent = error.message;
+          await Promise.all([loadOverview(), loadReviews()]);
+        } catch (err) {
+          alert('Failed to respond: ' + err.message);
         }
-      });
+      }
 
-      const loadOrders = async () => {
-        ordersList.innerHTML = '<div class="empty-state">Loading orders...</div>';
+      async function saveRule() {
+        const storefrontId = selectedStorefrontId();
+        if (!storefrontId) {
+          alert('Please choose a specific storefront before saving a rule.');
+          return;
+        }
+        const payload = {
+          storefront_id: storefrontId,
+          min_rating: Number(document.getElementById('minRating').value),
+          max_rating: Number(document.getElementById('maxRating').value),
+          template: document.getElementById('ruleTemplate').value
+        };
+
         try {
-          const response = await fetch('/api/orders');
-          const data = await response.json();
-          if (!Array.isArray(data) || !data.length) {
-            ordersList.innerHTML = '<div class="empty-state">No orders yet.</div>';
-            return;
-          }
-          ordersList.innerHTML = data
-            .map(
-              (order) => `
-                <div class="order-card">
-                  <strong>${order.id}</strong>
-                  <div class="result-meta">
-                    <span>${order.store_name} • ${order.requester}</span>
-                    <span>${formatPrice(order.total_estimated)}</span>
-                  </div>
-                  <small>Status: ${order.status} • Needed by: ${order.needed_by || 'TBD'}</small>
-                </div>
-              `
-            )
-            .join('');
-        } catch (error) {
-          ordersList.innerHTML = '<div class="empty-state">Unable to load orders right now.</div>';
+          await jsonFetch('/api/auto-rules', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          alert('Rule saved. New auto-responses will use this template.');
+        } catch (err) {
+          alert('Failed to save rule: ' + err.message);
         }
-      };
+      }
 
-      refreshOrders.addEventListener('click', loadOrders);
-      loadOrders();
-      renderCart();
+      document.getElementById('refreshReviews').addEventListener('click', loadReviews);
+      document.getElementById('statusFilter').addEventListener('change', loadReviews);
+      document.getElementById('storefrontFilter').addEventListener('change', loadReviews);
+      document.getElementById('saveRule').addEventListener('click', saveRule);
+
+      Promise.all([loadOverview(), loadStorefronts()]).then(loadReviews);
+      window.respond = respond;
     </script>
   </body>
 </html>
