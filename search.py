@@ -19,50 +19,7 @@ logger = logging.getLogger(__name__)
 Scraper = Callable[[str], Iterable[Dict[str, object]]]
 
 PRIORITY_VENDORS = ("mobilesentrix", "fixez", "amazon", "ebay")
-CLEANING_KEYWORDS = {
-    "clean",
-    "cleaner",
-    "cleaning",
-    "wipe",
-    "wipes",
-    "alcohol",
-    "solvent",
-    "degreaser",
-    "brush",
-    "tool",
-    "kit",
-    "adhesive",
-    "tape",
-    "microfiber",
-}
-REPAIR_KEYWORDS = {
-    "repair",
-    "replacement",
-    "part",
-    "parts",
-    "screen",
-    "battery",
-    "charging",
-    "connector",
-    "digitizer",
-    "display",
-    "assembly",
-    "flex",
-    "camera",
-    "lcd",
-    "oled",
-    "glass",
-    "housing",
-    "frame",
-    "speaker",
-    "microphone",
-    "usb",
-    "port",
-    "dock",
-    "motherboard",
-    "logic",
-}
-MIN_WORDING_MATCH = 0.80
+MIN_WORDING_MATCH = 0.45
 
 
 SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
@@ -175,13 +132,6 @@ def _wording_match_score(query: str, result: Dict[str, object]) -> float:
     return max(token_coverage, sequence_ratio)
 
 
-def _is_supported_category(query: str) -> bool:
-    normalized_query = _normalize_text(query)
-    query_tokens = set(normalized_query.split())
-    category_tokens = CLEANING_KEYWORDS | REPAIR_KEYWORDS
-    return bool(query_tokens & category_tokens)
-
-
 def _filter_results_for_category_and_match(
     query: str, results: List[Dict[str, object]]
 ) -> List[Dict[str, object]]:
@@ -212,9 +162,6 @@ def search_products(query: str) -> List[Dict[str, object]]:
     """
 
     if not query.strip():
-        return []
-
-    if not _is_supported_category(query):
         return []
 
     rewritten = rewrite_query_with_vendors(query)
