@@ -8,8 +8,11 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
 from difflib import SequenceMatcher
 from typing import Callable, Dict, Iterable, List
 
-from openai_search import rewrite_query_with_vendors, summarize_offers_with_openai
+from openai_search import rewrite_query_with_vendors, search_openai, summarize_offers_with_openai
+from scrapers.fixez import scrape_fixez
 from scrapers.google_search import scrape_google_search
+from scrapers.mobilesentrix import scrape_mobilesentrix
+from scrapers.websearch import scrape_websearch
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +49,27 @@ REPAIR_KEYWORDS = {
     "assembly",
     "flex",
     "camera",
+    "lcd",
+    "oled",
+    "glass",
+    "housing",
+    "frame",
+    "speaker",
+    "microphone",
+    "usb",
+    "port",
+    "dock",
+    "motherboard",
+    "logic",
 }
 MIN_WORDING_MATCH = 0.80
 
 
 SCRAPER_SOURCES: List[tuple[str, Scraper]] = [
+    ("MobileSentrix", scrape_mobilesentrix),
+    ("Fixez", scrape_fixez),
     ("Google", scrape_google_search),
+    ("Web", scrape_websearch),
 ]
 
 MAX_SCRAPER_WORKERS = 4
@@ -167,16 +185,9 @@ def _is_supported_category(query: str) -> bool:
 def _filter_results_for_category_and_match(
     query: str, results: List[Dict[str, object]]
 ) -> List[Dict[str, object]]:
-    query_tokens = set(_normalize_text(query).split())
-    category_tokens = CLEANING_KEYWORDS | REPAIR_KEYWORDS
     filtered: List[Dict[str, object]] = []
 
     for item in results:
-        title = str(item.get("title", ""))
-        combined_text = set(_normalize_text(title).split())
-        if not (combined_text & category_tokens) and query_tokens:
-            continue
-
         score = _wording_match_score(query, item)
         if score < MIN_WORDING_MATCH:
             continue
@@ -214,6 +225,12 @@ def search_products(query: str) -> List[Dict[str, object]]:
         results.extend(_run_scrapers(variant))
 
     deduped = _deduplicate_results(results)
+
+    if not deduped:
+        logger.info("Scrapers returned no results for '%s'; falling back to OpenAI", query)
+        ai_offers = search_openai(query)
+        deduped = _deduplicate_results(ai_offers)
+
     prioritized = _sort_results_by_priority(deduped)
     summarized = summarize_offers_with_openai(query, prioritized)
     filtered = _filter_results_for_category_and_match(query, summarized)

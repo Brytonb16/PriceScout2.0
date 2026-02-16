@@ -83,3 +83,27 @@ def test_search_products_sorts_lowest_price_first(monkeypatch):
 
     results = search.search_products("screen repair kit")
     assert [item["price"] for item in results] == [20, 40]
+
+
+def test_search_products_falls_back_to_openai_when_scrapers_empty(monkeypatch):
+    monkeypatch.setattr(
+        search, "rewrite_query_with_vendors", lambda q: {"primary": q, "boosted": []}
+    )
+    monkeypatch.setattr(search, "SCRAPER_SOURCES", [("Empty", lambda _q: [])])
+    monkeypatch.setattr(
+        search,
+        "search_openai",
+        lambda _q: [
+            {
+                "title": "iphone battery replacement",
+                "price": 19,
+                "source": "OpenAI",
+                "link": "https://example.com/offer",
+            }
+        ],
+    )
+    monkeypatch.setattr(search, "summarize_offers_with_openai", lambda _q, offers: offers)
+
+    results = search.search_products("iphone battery replacement")
+    assert len(results) == 1
+    assert results[0]["source"] == "OpenAI"
