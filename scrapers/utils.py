@@ -1,6 +1,7 @@
 import logging
 import re
 import requests
+from requests.exceptions import ProxyError
 
 # Use a full desktop browser header to avoid basic bot blocking
 HEADERS = {
@@ -21,6 +22,17 @@ def safe_get(url, params=None):
         resp = requests.get(url, params=params, headers=HEADERS, timeout=10)
         resp.raise_for_status()
         return resp.text
+    except ProxyError:
+        logger.warning("Proxy request failed for %s; retrying without environment proxy", url)
+        try:
+            with requests.Session() as session:
+                session.trust_env = False
+                resp = session.get(url, params=params, headers=HEADERS, timeout=10)
+                resp.raise_for_status()
+                return resp.text
+        except Exception:
+            logger.exception("Retry without proxy failed for %s", url)
+            return None
     except Exception:
         logger.exception("Request failed for %s", url)
         return None
