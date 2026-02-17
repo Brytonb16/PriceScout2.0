@@ -232,12 +232,6 @@ def search_products(query: str) -> List[Dict[str, object]]:
         deduped = _deduplicate_results(ai_offers)
 
     prioritized = _sort_results_by_priority(deduped)
-
-    # Remove obvious query mismatches before summarization so relevant offers are
-    # not crowded out by low-price noise from boosted vendor queries.
-    matched = _filter_results_for_category_and_match(query, prioritized)
-    candidates = matched or prioritized
-
-    summarized = summarize_offers_with_openai(query, candidates)
+    summarized = summarize_offers_with_openai(query, prioritized)
     filtered = _filter_results_for_category_and_match(query, summarized)
     return _sort_results_by_price(filtered)
