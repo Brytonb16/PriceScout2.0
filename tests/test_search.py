@@ -47,7 +47,7 @@ def test_search_products_uses_scrapers_and_filters_with_match_threshold(monkeypa
     assert all(item["match_score"] >= 0.8 for item in results)
 
 
-def test_search_products_supports_general_inventory_queries(monkeypatch):
+def test_search_products_returns_empty_for_unsupported_category(monkeypatch):
     monkeypatch.setattr(
         search, "rewrite_query_with_vendors", lambda q: {"primary": q, "boosted": []}
     )
@@ -60,9 +60,7 @@ def test_search_products_supports_general_inventory_queries(monkeypatch):
 
     monkeypatch.setattr(search, "SCRAPER_SOURCES", [("Fake", fake_scraper)])
 
-    results = search.search_products("gaming mouse")
-    assert len(results) == 1
-    assert results[0]["title"] == "gaming mouse"
+    assert search.search_products("gaming mouse") == []
 
 
 def test_search_products_prefilters_mismatches_before_summarizing(monkeypatch):
