@@ -52,12 +52,12 @@
     <main>
       <section class="panel">
         <h1>PriceScout Shopping Search</h1>
-        <p class="subtitle">Search any parts, accessories, tools, or other inventory items your store needs. Results are ranked from lowest to highest price and filtered for relevant wording matches.</p>
+        <p class="subtitle">Search cleaning supplies, tools, and repair parts. Results are ranked from lowest to highest price and only include products with at least 80% wording match.</p>
         <div class="controls">
           <input id="searchInput" placeholder="Try: iphone 12 charging port flex cable" />
           <button id="searchButton">Search</button>
         </div>
-        <p class="hint">Tip: Include brand, model, size, or part details for the most relevant results.</p>
+        <p class="hint">Supported intent: cleaning supplies/tools and repair parts only.</p>
       </section>
 
       <section class="panel">
@@ -121,7 +121,7 @@
           meta.textContent = `Found ${data.count} item(s) for "${data.query}".`;
 
           if (!data.results.length) {
-            rows.innerHTML = '<tr><td colspan="5" class="mono">No matching products found. Try adding more specific details (brand, model, size, color, etc.).</td></tr>';
+            rows.innerHTML = '<tr><td colspan="5" class="mono">No matching products found. Try adding specific part/tool wording.</td></tr>';
           }
         } catch (err) {
           rows.innerHTML = '<tr><td colspan="5" class="mono">Search failed.</td></tr>';
