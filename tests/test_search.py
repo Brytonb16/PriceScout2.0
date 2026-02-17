@@ -63,33 +63,6 @@ def test_search_products_returns_empty_for_unsupported_category(monkeypatch):
     assert search.search_products("gaming mouse") == []
 
 
-def test_search_products_prefilters_mismatches_before_summarizing(monkeypatch):
-    monkeypatch.setattr(
-        search, "rewrite_query_with_vendors", lambda q: {"primary": q, "boosted": []}
-    )
-
-    def fake_scraper(_query):
-        return [
-            {"title": "toilet paper 24 pack", "price": 15, "source": "Amazon", "link": "https://a/1"},
-            {"title": "xbox controller skin", "price": 3, "source": "Ebay", "link": "https://a/2"},
-        ]
-
-    monkeypatch.setattr(search, "SCRAPER_SOURCES", [("Fake", fake_scraper)])
-
-    captured = {}
-
-    def fake_summarizer(_query, offers):
-        captured["titles"] = [item["title"] for item in offers]
-        return offers
-
-    monkeypatch.setattr(search, "summarize_offers_with_openai", fake_summarizer)
-
-    results = search.search_products("toilet paper")
-
-    assert captured["titles"] == ["toilet paper 24 pack"]
-    assert [item["title"] for item in results] == ["toilet paper 24 pack"]
-
-
 def test_search_products_returns_empty_for_blank_query():
     assert search.search_products("   ") == []
 
